@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flick · NCLEX-RN demo</title>
+<meta name="description" content="Flick flashcards prototype: a 50-card NCLEX-RN demo deck with spaced repetition.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f172a; --ink2:#334155; --muted:#64748b; --faint:#94a3b8;
+  --line:#e5e7eb; --line2:#f1f5f9; --bg:#ffffff; --soft:#f8fafc;
+  --indigo:#4f46e5; --indigo-d:#4338ca; --indigo-50:#eef2ff; --indigo-100:#e0e7ff;
+  --again:#dc2626; --hard:#d97706; --good:#16a34a; --easy:#4f46e5;
+  --r:14px; --shadow:0 1px 2px rgba(15,23,42,.04),0 4px 16px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--indigo)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+kbd{font:600 11px/1 Inter,sans-serif;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:3px 5px;color:var(--muted);background:#fff}
+
+/* header */
+.top{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:28px;height:60px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;letter-spacing:-.02em;color:var(--ink);text-decoration:none}
+.tabs{display:flex;gap:4px}
+.tabs a{padding:7px 12px;border-radius:8px;color:var(--muted);font-weight:500;font-size:14px;text-decoration:none}
+.tabs a:hover{color:var(--ink);background:var(--soft)}
+.tabs a.on{color:var(--indigo);background:var(--indigo-50)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.clock{font-size:12px;font-weight:600;color:var(--hard);background:#fffbeb;border:1px solid #fde68a;padding:3px 9px;border-radius:99px}
+.icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--muted)}
+.icon-btn:hover{color:var(--ink);border-color:#cbd5e1}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--indigo-100);color:var(--indigo-d);display:grid;place-items:center;font-weight:700;font-size:13px}
+
+main{padding:32px 24px 120px}
+h1{font-size:28px;letter-spacing:-.025em;margin:0 0 4px;font-weight:700}
+h2{font-size:16px;margin:0 0 14px;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 24px;font-size:15px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:11px;padding:13px 22px;font-weight:600;font-size:15px;background:var(--indigo);color:#fff;transition:background .15s,transform .05s}
+.btn:hover{background:var(--indigo-d)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{background:#c7d2fe;cursor:default}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--soft)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:8px}
+.btn.danger{background:var(--again)}
+.btn.danger:hover{background:#b91c1c}
+
+.panel{border:1px solid var(--line);border-radius:var(--r);background:#fff}
+.pad{padding:20px}
+
+/* today */
+.hero{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;padding:32px;border-radius:18px;background:linear-gradient(135deg,#fff 0%,var(--indigo-50) 100%);border:1px solid var(--indigo-100);margin-bottom:24px}
+.due-num{font-size:72px;font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--ink)}
+.due-label{font-size:18px;font-weight:600;margin:6px 0 14px}
+.split{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.pill{font-size:13px;font-weight:500;padding:4px 10px;border-radius:99px;background:#fff;border:1px solid var(--line);color:var(--ink2)}
+.pill b{font-weight:700}
+.sizer{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:230px}
+.sizer .lbl{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:10px}
+.step{display:flex;align-items:center;gap:12px}
+.step button{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:18px;font-weight:600;color:var(--ink2)}
+.step button:hover{background:var(--soft)}
+.step .val{font-size:22px;font-weight:700;min-width:44px;text-align:center}
+.sizer .hint{font-size:12px;color:var(--faint);margin-top:8px}
+
+.grid2{display:grid;grid-template-columns:1fr 320px;gap:24px}
+.area{display:grid;grid-template-columns:10px 1fr auto;gap:14px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line2)}
+.area:last-child{border-bottom:0}
+.dot{width:10px;height:10px;border-radius:50%}
+.area .name{font-weight:600;font-size:14.5px}
+.area .meta{font-size:12.5px;color:var(--muted);margin-top:1px}
+.bar{height:6px;border-radius:99px;background:var(--line2);overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;background:var(--indigo);border-radius:99px;transition:width .4s}
+.stat-big{font-size:32px;font-weight:800;letter-spacing:-.03em}
+.stat-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line2);font-size:14px}
+.stat-row:last-child{border-bottom:0}
+.stat-row span{color:var(--muted)}
+.streak{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.flame{width:46px;height:46px;border-radius:12px;background:#fff7ed;display:grid;place-items:center;font-size:24px}
+.side>.panel{margin-bottom:16px}
+.note{font-size:13px;color:var(--muted);line-height:1.55}
+
+/* cards list */
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.search{flex:1;min-width:220px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font:inherit;font-size:14px;outline:none}
+.search:focus{border-color:var(--indigo);box-shadow:0 0 0 3px var(--indigo-50)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--ink2)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.row{border-bottom:1px solid var(--line2);padding:14px 4px;cursor:pointer}
+.row:hover .rq{color:var(--indigo-d)}
+.row-top{display:flex;gap:12px;align-items:flex-start}
+.row .dot{margin-top:7px;flex:none}
+.rq{flex:1;font-size:14.5px;font-weight:500}
+.status{flex:none;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--line2);color:var(--muted);white-space:nowrap}
+.status.due{background:#fef3c7;color:#92400e}
+.status.learn{background:#fee2e2;color:#991b1b}
+.status.rev{background:#dcfce7;color:#166534}
+.flagmark{color:var(--again);font-size:12px;font-weight:600;flex:none}
+.row-body{margin:12px 0 4px 22px;font-size:14px}
+.row-body .ans{font-weight:600;margin-bottom:6px}
+.row-body .why{color:var(--ink2)}
+.row-body ol{margin:0 0 10px;padding-left:20px;color:var(--ink2)}
+.row-body li.ok{color:var(--good);font-weight:600}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+
+/* progress */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi .k{font-size:12.5px;color:var(--muted);font-weight:500}
+.kpi .v{font-size:28px;font-weight:800;letter-spacing:-.03em;margin-top:2px}
+.fc{display:flex;align-items:flex-end;gap:10px;height:140px;padding-top:10px}
+.fc .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.fc .b{width:100%;max-width:44px;background:var(--indigo-100);border-radius:6px 6px 0 0;min-height:2px;position:relative}
+.fc .b.today{background:var(--indigo)}
+.fc .n{font-size:12px;font-weight:600;color:var(--ink2)}
+.fc .d{font-size:11.5px;color:var(--muted)}
+
+/* study overlay */
+.study{position:fixed;inset:0;z-index:50;background:#fff;display:flex;flex-direction:column}
+.study[hidden]{display:none}
+.s-top{display:flex;align-items:center;gap:16px;padding:14px 24px;border-bottom:1px solid var(--line)}
+.s-top .bar{flex:1;margin:0;height:8px}
+.s-left{font-size:13px;color:var(--muted);font-weight:600;min-width:64px;text-align:right}
+.s-body{flex:1;overflow:auto;display:flex;justify-content:center;padding:32px 20px}
+.card{width:100%;max-width:720px;margin:auto 0}
+.c-meta{display:flex;gap:8px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--line2);color:var(--ink2);display:inline-flex;align-items:center;gap:6px}
+.tag.kind{background:var(--indigo-50);color:var(--indigo-d)}
+.flag{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 10px;font-size:12.5px;color:var(--muted);font-weight:500}
+.flag.on{color:var(--again);border-color:#fecaca;background:#fef2f2}
+.q{font-size:24px;font-weight:600;letter-spacing:-.015em;line-height:1.4}
+.opts{list-style:none;padding:0;margin:22px 0 0;display:grid;gap:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:12px 14px;font-size:15.5px}
+.opt:hover{border-color:#c7d2fe}
+.opt .lt{flex:none;width:24px;height:24px;border-radius:6px;background:var(--line2);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+.opt.picked{border-color:var(--indigo);background:var(--indigo-50)}
+.opt.picked .lt{background:var(--indigo);color:#fff}
+.opt.ok{border-color:var(--good);background:#f0fdf4}
+.opt.ok .lt{background:var(--good);color:#fff}
+.opt.bad{border-color:var(--again);background:#fef2f2}
+.opt.bad .lt{background:var(--again);color:#fff}
+.opt[disabled]{cursor:default}
+.answer{margin-top:26px;padding-top:22px;border-top:1px dashed var(--line);animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.verdict{display:inline-block;font-size:13px;font-weight:700;margin-bottom:10px;padding:3px 10px;border-radius:99px}
+.verdict.y{background:#dcfce7;color:#166534}
+.verdict.n{background:#fee2e2;color:#991b1b}
+.a-lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--muted);margin-bottom:6px}
+.a{font-size:18px;font-weight:600;line-height:1.45;margin-bottom:16px}
+.why{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px;color:var(--ink2)}
+.why b{color:var(--ink)}
+.s-foot{border-top:1px solid var(--line);padding:16px 24px calc(16px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.s-foot .btn{min-width:260px}
+.grades{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:720px}
+.g{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.g .gl{font-weight:700;font-size:15px}
+.g .gi{font-size:12.5px;color:var(--muted)}
+.g kbd{margin-top:3px}
+.g.again .gl{color:var(--again)} .g.again:hover{border-color:var(--again);background:#fef2f2}
+.g.hard .gl{color:var(--hard)} .g.hard:hover{border-color:var(--hard);background:#fffbeb}
+.g.good .gl{color:var(--good)} .g.good:hover{border-color:var(--good);background:#f0fdf4}
+.g.easy .gl{color:var(--easy)} .g.easy:hover{border-color:var(--easy);background:var(--indigo-50)}
+.done{text-align:center;max-width:460px;margin:auto}
+.done .check{width:72px;height:72px;border-radius:50%;background:#dcfce7;color:var(--good);display:grid;place-items:center;margin:0 auto 18px}
+.done-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0 26px}
+.done-stats div{border:1px solid var(--line);border-radius:12px;padding:12px}
+.done-stats b{display:block;font-size:24px;letter-spacing:-.02em}
+.done-stats span{font-size:12px;color:var(--muted)}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.4);display:grid;place-items:center;padding:20px}
+.modal[hidden]{display:none}
+.sheet{background:#fff;border-radius:16px;max-width:440px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(15,23,42,.25)}
+.sheet h3{margin:0 0 6px;font-size:18px}
+.sheet .sec{border-top:1px solid var(--line2);padding:16px 0 4px;margin-top:16px}
+.sheet .sec h4{margin:0 0 4px;font-size:14px}
+.sheet .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:22px 0 30px;color:var(--muted);font-size:12.5px}
+footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
+.bottom-nav{display:none}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;z-index:70;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+@media (max-width:820px){
+  .wrap{padding:0 16px}
+  main{padding:20px 16px 110px}
+  .tabs{display:none}
+  .top-in{height:54px}
+  .hero{grid-template-columns:1fr;padding:22px;gap:18px}
+  .due-num{font-size:60px}
+  .hero .btn{width:100%}
+  .sizer{min-width:0}
+  .grid2{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  h1{font-size:24px}
+  .q{font-size:20px}
+  .a{font-size:16.5px}
+  .s-body{padding:22px 16px}
+  .s-top{padding:12px 16px}
+  .s-foot{padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+  .s-foot .btn{width:100%}
+  .grades{gap:6px}
+  .g kbd{display:none}
+  .reveal kbd{display:none}
+  footer{padding-bottom:90px}
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:20;background:#fff;border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+  .bottom-nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--faint);text-decoration:none;padding:4px}
+  .bottom-nav a.on{color:var(--indigo)}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="logo" href="#today" aria-label="Flick home">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#4f46e5"/><rect x="7" y="9" width="12" height="10" rx="2.5" fill="#a5b4fc" transform="rotate(-8 13 14)"/><rect x="9" y="8" width="12" height="10" rx="2.5" fill="#fff"/></svg>
+      Flick
+    </a>
+    <nav class="tabs" id="tabs">
+      <a href="#today" data-v="today">Today</a>
+      <a href="#cards" data-v="cards">Cards</a>
+      <a href="#progress" data-v="progress">Progress</a>
+    </nav>
+    <div class="top-right">
+      <span class="clock" id="clock" hidden></span>
+      <button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <div class="avatar" title="Demo student">RN</div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+
+<footer>
+  <div class="wrap">
+    <div>Flick prototype · NCLEX-RN demo deck (50 cards). Cards were written for this demo, not taken from a test bank, and should be reviewed by a nurse educator. Not clinical guidance.</div>
+    <div>Progress is saved in this browser only.</div>
+  </div>
+</footer>
+
+<nav class="bottom-nav" id="bnav">
+  <a href="#today" data-v="today"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Today</a>
+  <a href="#cards" data-v="cards"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>Cards</a>
+  <a href="#progress" data-v="progress"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progress</a>
+</nav>
+
+<div class="study" id="study" hidden role="dialog" aria-modal="true" aria-label="Study session">
+  <div class="s-top">
+    <button class="icon-btn" id="closeStudy" aria-label="End session" title="End session (Esc)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="bar"><i id="sBar" style="width:0"></i></div>
+    <div class="s-left" id="sLeft"></div>
+  </div>
+  <div class="s-body" id="sBody"></div>
+  <div class="s-foot" id="sFoot"></div>
+</div>
+
+<div class="modal" id="modal" hidden></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   DATA — 50 NCLEX-RN cards, grouped by NCLEX client-needs area.
+   Written for this prototype; have a nurse educator review.
+   kind: "recall" (flip), "mc" (one answer), "sata" (select all)
+   ========================================================= */
+const TOPICS = {
+  pharm:  {name:"Pharmacology",                 color:"#4f46e5"},
+  physio: {name:"Physiological Adaptation",     color:"#0891b2"},
+  mgmt:   {name:"Management of Care",           color:"#7c3aed"},
+  safety: {name:"Safety & Infection Control",   color:"#16a34a"},
+  risk:   {name:"Reduction of Risk",            color:"#ea580c"},
+  health: {name:"Maternal & Pediatric",         color:"#db2777"},
+  basic:  {name:"Basic Care & Comfort",         color:"#ca8a04"},
+  psych:  {name:"Psychosocial Integrity",       color:"#475569"}
+};
+
+const CARDS = [
+/* ---------- Pharmacology (10) ---------- */
+{id:"p1",t:"pharm",q:`A client taking digoxin has an apical pulse of 54/min. What should the nurse do?`,
+ a:`Hold the dose and notify the provider.`,
+ why:`Hold digoxin when an adult's apical pulse is below 60/min. Count the apical pulse for a full minute first, and check the latest digoxin and potassium levels: low potassium raises the risk of digoxin toxicity.`},
+{id:"p2",t:"pharm",q:`Furosemide 40 mg IV is due. This morning's potassium is 3.1 mEq/L. What should the nurse do?`,
+ a:`Hold the dose and notify the provider.`,
+ why:`Furosemide is a loop diuretic that wastes potassium. Normal potassium is 3.5–5.0 mEq/L; another dose would push it lower and raise the risk of dysrhythmias.`},
+{id:"p3",t:"pharm",kind:"mc",q:`Which medication reverses the effects of warfarin?`,
+ opts:[`Protamine sulfate`,`Vitamin K (phytonadione)`,`Naloxone`,`Acetylcysteine`],ans:[1],
+ a:`Vitamin K (phytonadione).`,
+ why:`Vitamin K reverses warfarin; protamine reverses heparin. Warfarin is monitored with PT/INR (a common target is 2–3); heparin with aPTT.`},
+{id:"p4",t:"pharm",q:`Mixing regular and NPH insulin in one syringe: which is drawn up first?`,
+ a:`Regular (clear) first, then NPH (cloudy).`,
+ why:`“Clear before cloudy” keeps NPH from contaminating the regular insulin vial. Inject air into the NPH vial, then the regular vial, draw up regular, then NPH.`},
+{id:"p5",t:"pharm",q:`A client on lisinopril reports swelling of the lips and tongue. What is the priority?`,
+ a:`Treat it as angioedema: assess the airway, hold the drug, and notify the provider immediately.`,
+ why:`Angioedema is a rare but life-threatening ACE-inhibitor reaction that can block the airway. A dry cough is the common, less dangerous side effect.`},
+{id:"p6",t:"pharm",q:`What is the usual therapeutic lithium level, and what are early signs of toxicity?`,
+ a:`About 0.6–1.2 mEq/L. Early toxicity: nausea, vomiting, diarrhea, coarse hand tremor, muscle weakness.`,
+ why:`Lithium has a narrow therapeutic range. Teach steady sodium and fluid intake (2–3 L a day): dehydration or a low-salt diet raises lithium levels.`},
+{id:"p7",t:"pharm",q:`How should IV vancomycin be infused, and why?`,
+ a:`Slowly, over at least 60 minutes.`,
+ why:`A fast infusion can cause vancomycin infusion reaction: flushing and rash on the face, neck and upper body, sometimes low blood pressure. Also monitor trough levels, kidney function and hearing.`},
+{id:"p8",t:"pharm",q:`After IV morphine, a client's respiratory rate is 8/min and hard to rouse. Which drug is given, and what does the nurse watch for afterward?`,
+ a:`Naloxone. Keep monitoring breathing: the opioid can outlast the naloxone, so repeat doses may be needed.`,
+ why:`Naloxone works for a shorter time than many opioids. It also reverses pain relief, so expect pain to return and reassess it.`},
+{id:"p9",t:"pharm",q:`When should a client take levothyroxine?`,
+ a:`In the morning on an empty stomach, 30–60 minutes before breakfast, with water.`,
+ why:`Food, calcium, iron and antacids reduce absorption. Palpitations, insomnia or heat intolerance suggest the dose is too high.`},
+{id:"p10",t:"pharm",q:`A client on metformin is scheduled for a CT scan with iodinated contrast. What does the nurse expect?`,
+ a:`Metformin is held at the time of the scan and for 48 hours after, and restarted once kidney function is confirmed stable.`,
+ why:`Contrast can injure the kidneys. If they fail, metformin builds up and can cause lactic acidosis.`},
+
+/* ---------- Physiological Adaptation (9) ---------- */
+{id:"ph1",t:"physio",kind:"sata",q:`Which findings suggest hypoglycemia? Select all that apply.`,
+ opts:[`Shakiness and sweating`,`Fruity breath odor`,`Tachycardia`,`Confusion or irritability`,`Kussmaul respirations`],ans:[0,2,3],
+ a:`Shakiness and sweating, tachycardia, and confusion or irritability.`,
+ why:`“Cool and clammy, need some candy.” Fruity breath and Kussmaul breathing point to DKA. Rule of 15: give 15 g of fast-acting carbohydrate and recheck glucose in 15 minutes.`},
+{id:"ph2",t:"physio",q:`Which ECG change is classic for hyperkalemia?`,
+ a:`Tall, peaked T waves (later: wide QRS and flattened P waves).`,
+ why:`Potassium above 5.0 mEq/L can cause dangerous dysrhythmias. Hypokalemia looks the opposite: flat T waves and U waves.`},
+{id:"ph3",t:"physio",q:`ABG: pH 7.30, PaCO₂ 52 mmHg, HCO₃⁻ 24 mEq/L. Interpret it.`,
+ a:`Uncompensated respiratory acidosis.`,
+ why:`pH below 7.35 means acidosis. PaCO₂ above 45 matches it, so the cause is respiratory. HCO₃⁻ is normal (22–26), so the kidneys haven't compensated yet.`},
+{id:"ph4",t:"physio",q:`Positive Chvostek's and Trousseau's signs point to which imbalance?`,
+ a:`Hypocalcemia.`,
+ why:`Low calcium makes nerves more excitable: the face twitches when the cheek is tapped (Chvostek's), and the hand spasms when a BP cuff is inflated (Trousseau's). Watch for it after thyroid or parathyroid surgery.`},
+{id:"ph5",t:"physio",q:`There is continuous bubbling in a chest tube's water-seal chamber. What does it mean?`,
+ a:`An air leak. Check the system for loose connections, starting at the client and working down.`,
+ why:`Gentle rise and fall with breathing (tidaling) is normal. If the tube comes out of the chest, cover the site with a sterile dressing taped on three sides and notify the provider.`},
+{id:"ph6",t:"physio",q:`What are the earliest signs of hypovolemic shock?`,
+ a:`Rising heart rate, restlessness or anxiety, and cool skin. Low blood pressure is a late sign.`,
+ why:`The body first compensates by speeding up the heart and narrowing blood vessels. By the time blood pressure drops, a large share of blood volume has been lost.`},
+{id:"ph7",t:"physio",q:`Suspected ischemic stroke: what must happen before alteplase (tPA) is given?`,
+ a:`A noncontrast head CT to rule out bleeding, within the treatment window (generally up to 3–4.5 hours from when the client was last known well).`,
+ why:`A thrombolytic given during a hemorrhagic stroke can be fatal. Record the time the client was last known well.`},
+{id:"ph8",t:"physio",q:`What is the Parkland formula for burn fluid resuscitation?`,
+ a:`4 mL × weight (kg) × % TBSA burned of lactated Ringer's over 24 hours: half in the first 8 hours, the rest over the next 16.`,
+ why:`The clock starts at the time of the burn, not arrival. Example: 70 kg with 30% TBSA = 8,400 mL, so 4,200 mL in the first 8 hours. Urine output (about 0.5 mL/kg/hr in adults) shows whether fluids are enough.`},
+{id:"ph9",t:"physio",q:`DKA: what are the key findings, and what comes first in treatment?`,
+ a:`High glucose, ketones, metabolic acidosis, Kussmaul respirations and fruity breath. IV fluids come first, then an IV regular insulin infusion.`,
+ why:`Check potassium before and during insulin: insulin moves potassium into cells and can cause severe hypokalemia.`},
+
+/* ---------- Management of Care (6) ---------- */
+{id:"m1",t:"mgmt",kind:"mc",q:`Which client should the nurse see first?`,
+ opts:[`Post-op day 1, pain 6/10, last pain dose 3 hours ago`,`Client with COPD, SpO₂ 89% (baseline 88–90%)`,`Client 6 hours after a thyroidectomy with new high-pitched, noisy breathing`,`Client with type 2 diabetes, glucose 180 mg/dL before lunch`],ans:[2],
+ a:`The client with new stridor after a thyroidectomy.`,
+ why:`Stridor after thyroid surgery signals airway obstruction (swelling, a hematoma, or laryngospasm from low calcium). Airway comes first. The COPD client is at their baseline.`},
+{id:"m2",t:"mgmt",q:`Which tasks can the RN not delegate to assistive personnel (UAP)?`,
+ a:`Assessment, teaching, evaluation, and care of unstable clients.`,
+ why:`Memory aid: you can't delegate what you EAT (Evaluate, Assess, Teach). UAP can take vital signs on stable clients, bathe, feed, help clients walk, and measure intake and output; the RN interprets the results.`},
+{id:"m3",t:"mgmt",q:`What does SBAR stand for?`,
+ a:`Situation, Background, Assessment, Recommendation.`,
+ why:`SBAR structures handoffs and calls to providers so key facts aren't missed. Have recent vital signs, labs, medications and the chart ready before calling.`},
+{id:"m4",t:"mgmt",q:`Informed consent: what is the nurse's role?`,
+ a:`Witness the signature and confirm the client understands and is signing voluntarily. The provider explains the procedure, risks and alternatives.`,
+ why:`If the client has questions or seems unsure, hold the signing and notify the provider. Consent needs a competent adult (or legal representative) who hasn't just been given sedating medication.`},
+{id:"m5",t:"mgmt",q:`After a medication error, where is the incident report filed?`,
+ a:`On a separate incident (occurrence) report. It is never mentioned in the client's chart.`,
+ why:`Chart only the facts: what was given, the client's condition, who was notified and what was done. The incident report is for quality improvement.`},
+{id:"m6",t:"mgmt",kind:"sata",q:`Which tasks fit an LPN/LVN's scope when assigned stable clients? Select all that apply.`,
+ opts:[`Give scheduled oral medications`,`Perform an admission assessment`,`Reinforce discharge teaching the RN started`,`Collect data such as vital signs and wound appearance`,`Develop the initial care plan`],ans:[0,2,3],
+ a:`Give scheduled oral meds, reinforce teaching, and collect data.`,
+ why:`LPNs care for stable clients with predictable outcomes. Initial assessment, care planning and initial teaching stay with the RN. Exact scope varies by state.`},
+
+/* ---------- Safety & Infection Control (6) ---------- */
+{id:"s1",t:"safety",kind:"sata",q:`Which conditions require airborne precautions? Select all that apply.`,
+ opts:[`Tuberculosis`,`Measles (rubeola)`,`Influenza`,`Varicella (chickenpox)`,`C. difficile`],ans:[0,1,3],
+ a:`Tuberculosis, measles, and varicella.`,
+ why:`Airborne: negative-pressure room and an N95 respirator. Memory aid “My Chicken Hez TB”: Measles, Chickenpox, disseminated Herpes zoster, TB. Influenza is droplet; C. diff is contact.`},
+{id:"s2",t:"safety",q:`A client has C. difficile. Which precautions, hand hygiene and cleaning are needed?`,
+ a:`Contact precautions (gown and gloves), handwashing with soap and water, and bleach-based cleaning of surfaces.`,
+ why:`Alcohol hand rubs don't kill C. diff spores; the friction of soap-and-water washing removes them.`},
+{id:"s3",t:"safety",q:`In what order is PPE put on (donned) and taken off (doffed)?`,
+ a:`On: gown, mask or respirator, goggles or face shield, gloves. Off: gloves, goggles or face shield, gown, mask or respirator.`,
+ why:`Gloves come off first because they're the most contaminated; the mask comes off last, after leaving the room. Clean hands between steps.`},
+{id:"s4",t:"safety",q:`Fire on the unit: what do RACE and PASS stand for?`,
+ a:`RACE: Rescue, Alarm, Contain, Extinguish. PASS: Pull the pin, Aim at the base, Squeeze, Sweep.`,
+ why:`Move clients in immediate danger first, then sound the alarm. Closing doors contains smoke and fire.`},
+{id:"s5",t:"safety",q:`What are the key safety rules for physical restraints?`,
+ a:`Use only with a provider's order and as a last resort. Tie to the bed frame (not the side rails) with a quick-release knot, check circulation and skin often, and release at least every 2 hours.`,
+ why:`Restraints are never ordered PRN. Try alternatives first (reorientation, a sitter, a bed alarm) and document behavior, alternatives tried and each check.`},
+{id:"s6",t:"safety",kind:"mc",q:`Which action best prevents falls for a confused older adult?`,
+ opts:[`Raise all four side rails`,`Keep the bed in its lowest position with the call light in reach`,`Apply a vest restraint at night`,`Turn off all lights at night`],ans:[1],
+ a:`Keep the bed in its lowest position with the call light in reach.`,
+ why:`A low bed, call light in reach, nonskid socks and scheduled toileting prevent falls. Four raised rails count as a restraint and cause worse injuries when clients climb over them.`},
+
+/* ---------- Reduction of Risk Potential (6) ---------- */
+{id:"r1",t:"risk",q:`A client shows signs of a reaction during a blood transfusion. What is the first action?`,
+ a:`Stop the transfusion, then keep the IV line open with 0.9% saline through new tubing.`,
+ why:`Then stay with the client, check vital signs, notify the provider and blood bank, and send the bag and tubing back. Stay with every client for the first 15 minutes of a transfusion, when reactions are most likely.`},
+{id:"r2",t:"risk",q:`After a cardiac catheterization through the femoral artery, what does the nurse monitor?`,
+ a:`The site for bleeding or hematoma, plus distal pulses, color and warmth of the leg. Keep the leg straight for the ordered bed-rest period.`,
+ why:`A cool, pale leg or weak pulse may mean a clot; report it right away. New back pain can signal bleeding behind the abdomen (retroperitoneal bleed).`},
+{id:"r3",t:"risk",q:`What is the most reliable way to confirm a new NG tube's placement?`,
+ a:`X-ray confirmation.`,
+ why:`Bedside checks support it, such as gastric aspirate with a pH of 5 or less. Listening for air injected through the tube is not reliable.`},
+{id:"r4",t:"risk",q:`Normal adult ranges: sodium, potassium, fasting glucose?`,
+ a:`Sodium 135–145 mEq/L; potassium 3.5–5.0 mEq/L; fasting glucose 70–100 mg/dL.`,
+ why:`Ranges vary slightly by lab. If a question gives its own ranges, use those. Potassium has the narrowest safe range and is the most dangerous to get wrong.`},
+{id:"r5",t:"risk",q:`What should a client do right before a paracentesis?`,
+ a:`Empty their bladder.`,
+ why:`A full bladder can be punctured by the needle. Also record baseline vital signs and weight, and watch blood pressure afterward as fluid shifts.`},
+{id:"r6",t:"risk",q:`What should the nurse watch for in the first 24 hours after a thyroidectomy?`,
+ a:`Airway problems (stridor, swelling), bleeding (check behind the neck too), and low calcium (tingling around the mouth, muscle cramps).`,
+ why:`Keep a tracheostomy set and calcium gluconate on hand. New hoarseness may mean laryngeal nerve injury.`},
+
+/* ---------- Maternal & Pediatric (5) ---------- */
+{id:"h1",t:"health",q:`Late decelerations appear on the fetal monitor. What is the cause, and what does the nurse do?`,
+ a:`Uteroplacental insufficiency. Stop oxytocin, turn the client to her side, give IV fluids, give oxygen per protocol, and notify the provider.`,
+ why:`VEAL CHOP: Variable = Cord compression, Early = Head compression, Accelerations = OK, Late = Placental insufficiency.`},
+{id:"h2",t:"health",kind:"sata",q:`Which findings require the nurse to stop a magnesium sulfate infusion? Select all that apply.`,
+ opts:[`Absent deep tendon reflexes`,`Respiratory rate below 12/min`,`Urine output below 30 mL/hr`,`Blood pressure 150/95`,`Heart rate 88/min`],ans:[0,1,2],
+ a:`Absent reflexes, respiratory rate below 12/min, and urine output below 30 mL/hr.`,
+ why:`These signal magnesium toxicity (low urine output lets magnesium build up, since the kidneys clear it). Stop the infusion, notify the provider, and have calcium gluconate, the antidote, ready.`},
+{id:"h3",t:"health",q:`Postpartum, the fundus is boggy and above the umbilicus. What is the first action?`,
+ a:`Massage the fundus until it is firm.`,
+ why:`A soft uterus (atony) is the leading cause of postpartum hemorrhage. Also check for a full bladder, which pushes the uterus up and to one side, and expect an order for oxytocin.`},
+{id:"h4",t:"health",q:`When is Rho(D) immune globulin (RhoGAM) given?`,
+ a:`To an Rh-negative mother at about 28 weeks and within 72 hours after the birth of an Rh-positive baby, and after miscarriage, abortion or abdominal trauma.`,
+ why:`It stops the mother from forming antibodies that could attack the red blood cells of a future Rh-positive baby.`},
+{id:"h5",t:"health",q:`A child is drooling, has a high fever and sits leaning forward in a tripod position. What must the nurse avoid?`,
+ a:`Examining or swabbing the throat with a tongue depressor.`,
+ why:`These are signs of epiglottitis, an airway emergency; touching the throat can trigger complete blockage. Keep the child calm and upright, and have emergency airway equipment ready.`},
+
+/* ---------- Basic Care & Comfort (4) ---------- */
+{id:"b1",t:"basic",q:`How does a stage 1 pressure injury differ from stage 2?`,
+ a:`Stage 1: intact skin with redness that doesn't blanch. Stage 2: partial-thickness skin loss with exposed dermis, such as a shallow open wound or a blister.`,
+ why:`Prevention: reposition at least every 2 hours, keep skin clean and dry, and use pressure-redistributing surfaces.`},
+{id:"b2",t:"basic",q:`A client uses a cane. Which hand holds it, and how do they walk?`,
+ a:`Hold the cane on the strong (unaffected) side, and move the cane forward together with the weak leg.`,
+ why:`This widens the base of support and takes weight off the weak leg. On stairs: up with the good leg, down with the bad (the cane moves with the bad leg).`},
+{id:"b3",t:"basic",q:`How should a client receiving a continuous tube feeding be positioned?`,
+ a:`With the head of the bed raised at least 30–45 degrees.`,
+ why:`Sitting up lowers the risk of aspiration. Pause the feeding if the client must lie flat.`},
+{id:"b4",t:"basic",q:`What teaching helps prevent dumping syndrome after gastric surgery?`,
+ a:`Small, frequent meals high in protein and low in simple sugars; drink fluids between meals, not with them; lie down briefly after eating.`,
+ why:`Food emptying too quickly into the small intestine causes cramping, dizziness, sweating and diarrhea 15–30 minutes after meals.`},
+
+/* ---------- Psychosocial Integrity (4) ---------- */
+{id:"ps1",t:"psych",q:`A client with depression suddenly seems calm and is giving away belongings. What should the nurse do?`,
+ a:`Ask directly about suicide (“Are you thinking of killing yourself?”) and assess for a plan.`,
+ why:`Sudden calm can mean the client has decided on a plan. Asking directly does not increase risk. Keep the client safe with close observation and tell the team.`},
+{id:"ps2",t:"psych",q:`Which foods must a client taking an MAOI such as phenelzine avoid?`,
+ a:`Tyramine-rich foods: aged cheeses, cured or smoked meats, soy sauce, tap beer and red wine.`,
+ why:`Tyramine with an MAOI can cause a hypertensive crisis: severe headache, stiff neck, palpitations.`},
+{id:"ps3",t:"psych",q:`Alcohol withdrawal: when does it start, and when is it most dangerous?`,
+ a:`It starts about 6–24 hours after the last drink. Seizures can occur in the first 48 hours; delirium tremens usually appears at 48–72 hours.`,
+ why:`Treatment uses benzodiazepines guided by the CIWA-Ar scale, plus thiamine. Delirium tremens (confusion, hallucinations, fever, unstable vital signs) is a medical emergency.`},
+{id:"ps4",t:"psych",kind:"mc",q:`A client says, “Nobody cares whether I live or die.” Which response is most therapeutic?`,
+ opts:[`“Why do you feel that way?”`,`“That's not true. Your family visits every day.”`,`“You're feeling that no one cares about you?”`,`“Let's talk about something more positive.”`],ans:[2],
+ a:`“You're feeling that no one cares about you?”`,
+ why:`Reflecting the feeling invites the client to say more. “Why” questions sound judgmental, false reassurance dismisses the feeling, and changing the subject shuts the conversation down.`}
+];
+
+/* Mix topics so new cards don't come one area at a time */
+const ORDER = (() => {
+  const by = {}; CARDS.forEach(c => (by[c.t] ||= []).push(c));
+  const lists = Object.values(by), out = [];
+  for (let i = 0; out.length < CARDS.length; i++) lists.forEach(l => l[i] && out.push(l[i]));
+  return out;
+})();
+const BYID = Object.fromEntries(CARDS.map(c => [c.id, c]));
+const KIND_LABEL = {mc:"Multiple choice", sata:"Select all that apply", recall:"Flashcard"};
+
+/* =========================================================
+   STATE — saved in localStorage (per browser). In the real app
+   this moves to a backend database.
+   ========================================================= */
+const KEY = "flick-nclex-v1", MIN = 60e3, HOUR = 36e5, DAY = 864e5;
+const fresh = () => ({v:1, cards:{}, flags:{}, newLimit:20, offset:0, day:null,
+  today:{reviewed:0,newSeen:0,good:0}, streak:0, lastDay:null, total:0});
+let S = load() || fresh();
+function load(){ try { const r = localStorage.getItem(KEY); return r ? Object.assign(fresh(), JSON.parse(r)) : null; } catch(e){ return null; } }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+
+const now = () => Date.now() + (S.offset || 0);
+const dayKey = t => { const d = new Date(t); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
+const endOfDay = (t = now()) => { const d = new Date(t); d.setHours(23,59,59,999); return d.getTime(); };
+function rollDay(){ const k = dayKey(now()); if (S.day !== k){ S.day = k; S.today = {reviewed:0,newSeen:0,good:0}; save(); } }
+const prog = id => S.cards[id] || {phase:"new", step:0, ivl:0, ease:2.5, due:0, lapses:0, reps:0};
+
+/* =========================================================
+   SCHEDULER — simple SM-2 style with learning steps.
+   plan() is the single source of truth for both the interval
+   labels on the buttons and what grading actually does.
+   g: 0 Again, 1 Hard, 2 Good, 3 Easy
+   ========================================================= */
+function plan(s0, g){
+  const s = {...s0}; let ms;
+  if (s.phase === "new" || s.phase === "learning"){
+    const step = s.step || 0;
+    if (g === 0){ s.phase = "learning"; s.step = 0; ms = MIN; }
+    else if (g === 1){ s.phase = "learning"; ms = step === 0 ? 6*MIN : 10*MIN; }
+    else if (g === 2){ if (step === 0){ s.phase = "learning"; s.step = 1; ms = 10*MIN; } else { s.phase = "review"; s.ivl = 1; ms = DAY; } }
+    else { s.phase = "review"; s.ivl = 4; ms = 4*DAY; }
+  } else if (s.phase === "relearning"){
+    if (g === 0) ms = MIN;
+    else if (g === 1) ms = 10*MIN;
+    else if (g === 2){ s.phase = "review"; s.ivl = Math.max(1, s.ivl); ms = s.ivl*DAY; }
+    else { s.phase = "review"; s.ivl = Math.max(2, Math.round(s.ivl*1.5)); ms = s.ivl*DAY; }
+  } else {
+    const iv = s.ivl || 1;
+    if (g === 0){ s.phase = "relearning"; s.lapses = (s.lapses||0)+1; s.ease = Math.max(1.3, s.ease-0.2); s.ivl = Math.max(1, Math.round(iv*0.5)); ms = 10*MIN; }
+    else if (g === 1){ s.ease = Math.max(1.3, s.ease-0.15); s.ivl = Math.max(iv+1, Math.round(iv*1.2)); ms = s.ivl*DAY; }
+    else if (g === 2){ s.ivl = Math.max(iv+1, Math.round(iv*s.ease)); ms = s.ivl*DAY; }
+    else { s.ease += 0.15; s.ivl = Math.max(iv+2, Math.round(iv*s.ease*1.3)); ms = s.ivl*DAY; }
+  }
+  return {ms, s};
+}
+function fmt(ms){
+  if (ms < HOUR) return Math.max(1, Math.round(ms/MIN)) + " min";
+  if (ms < DAY) return Math.round(ms/HOUR) + " hr";
+  const d = Math.round(ms/DAY);
+  if (d < 30) return d + (d === 1 ? " day" : " days");
+  if (d < 365) return Math.round(d/30) + " mo";
+  return (d/365).toFixed(1) + " yr";
+}
+
+function buckets(topic){
+  const eod = endOfDay(), b = {learning:[], review:[], fresh:[]};
+  for (const c of ORDER){
+    if (topic && c.t !== topic) continue;
+    const s = prog(c.id);
+    if (s.phase === "new") b.fresh.push(c);
+    else if (s.due <= eod) (s.phase === "review" ? b.review : b.learning).push(c);
+  }
+  const byDue = (x,y) => prog(x.id).due - prog(y.id).due;
+  b.learning.sort(byDue); b.review.sort(byDue);
+  return b;
+}
+const newLeft = () => Math.max(0, S.newLimit - S.today.newSeen);
+function dueToday(topic){
+  const b = buckets(topic);
+  const n = topic ? Math.min(b.fresh.length, Math.max(newLeft(), 0)) : Math.min(newLeft(), b.fresh.length);
+  return {learning:b.learning.length, review:b.review.length, newc:n, total:b.learning.length + b.review.length + n, freshAll:b.fresh.length};
+}
+function statusOf(c){
+  const s = prog(c.id);
+  if (s.phase === "new") return {txt:"New", cls:""};
+  if (s.phase !== "review") return {txt:"Learning", cls:"learn"};
+  if (s.due <= endOfDay()) return {txt:"Due today", cls:"due"};
+  return {txt:"In " + fmt(s.due - now()), cls:"rev"};
+}
+
+/* =========================================================
+   VIEWS
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const app = $("#app");
+const greet = () => { const h = new Date(now()).getHours(); return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; };
+
+function route(){
+  rollDay();
+  const v = (location.hash || "#today").slice(1);
+  const view = ["today","cards","progress"].includes(v) ? v : "today";
+  document.querySelectorAll("[data-v]").forEach(a => a.classList.toggle("on", a.dataset.v === view));
+  ({today:viewToday, cards:viewCards, progress:viewProgress})[view]();
+  const c = $("#clock");
+  if (S.offset > 0){ c.hidden = false; c.textContent = "Demo clock +" + Math.round(S.offset/DAY) + "d"; } else c.hidden = true;
+  window.scrollTo(0,0);
+}
+
+function viewToday(){
+  const d = dueToday();
+  const learned = CARDS.filter(c => prog(c.id).phase === "review").length;
+  const acc = S.today.reviewed ? Math.round(100*S.today.good/S.today.reviewed) : null;
+  const areas = Object.entries(TOPICS).map(([k,t]) => {
+    const cs = CARDS.filter(c => c.t === k), l = cs.filter(c => prog(c.id).phase === "review").length;
+    const b = buckets(k), due = b.learning.length + b.review.length;
+    return `<div class="area">
+      <span class="dot" style="background:${t.color}"></span>
+      <div><div class="name">${t.name}</div>
+        <div class="meta">${due ? `<b style="color:var(--ink2)">${due} due</b> · ` : ""}${l}/${cs.length} learned${b.fresh.length ? ` · ${b.fresh.length} new` : ""}</div>
+        <div class="bar"><i style="width:${Math.round(100*l/cs.length)}%;background:${t.color}"></i></div></div>
+      <button class="btn ghost sm" data-study="${k}" ${due + b.fresh.length ? "" : "disabled"}>Study</button>
+    </div>`;
+  }).join("");
+
+  app.innerHTML = `
+    <h1>${greet()}</h1>
+    <p class="sub">NCLEX-RN · demo deck of ${CARDS.length} cards across ${Object.keys(TOPICS).length} exam areas</p>
+
+    <section class="hero">
+      <div>
+        <div class="due-num">${d.total}</div>
+        <div class="due-label">${d.total === 1 ? "card" : "cards"} due today</div>
+        <div class="split">
+          <span class="pill"><b>${d.review}</b> review</span>
+          <span class="pill"><b>${d.learning}</b> learning</span>
+          <span class="pill"><b>${d.newc}</b> new</span>
+        </div>
+        ${d.total
+          ? `<button class="btn" id="startBtn">Start studying <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`
+          : `<button class="btn" disabled>All done for today</button>
+             <div class="note" style="margin-top:10px">${d.freshAll ? "Raise today's size to add more new cards." : "You've seen every card. Come back tomorrow for reviews."}</div>`}
+      </div>
+      <div class="sizer">
+        <div class="lbl">Today's size · new cards per day</div>
+        <div class="step">
+          <button id="minus" aria-label="Fewer new cards">−</button>
+          <span class="val">${S.newLimit}</span>
+          <button id="plus" aria-label="More new cards">+</button>
+        </div>
+        <div class="hint">${S.today.newSeen} new seen today. Reviews are never capped.</div>
+      </div>
+    </section>
+
+    <div class="grid2">
+      <section class="panel pad">
+        <h2>Study by exam area</h2>
+        ${areas}
+      </section>
+      <aside class="side">
+        <div class="panel pad">
+          <div class="streak"><div class="flame">🔥</div>
+            <div><div class="stat-big">${S.streak || 0}</div><div class="note" style="margin-top:-4px">day streak</div></div></div>
+          <div class="stat-row"><span>Reviewed today</span><b>${S.today.reviewed}</b></div>
+          <div class="stat-row"><span>Good or Easy</span><b>${acc === null ? "–" : acc + "%"}</b></div>
+          <div class="stat-row"><span>Cards learned</span><b>${learned} / ${CARDS.length}</b></div>
+        </div>
+        <div class="panel pad">
+          <h2 style="margin-bottom:8px">How it works</h2>
+          <p class="note" style="margin:0">Answer, then rate how well you knew it. Each button shows when you'll see the card again, so hard cards come back sooner and easy ones wait longer. Shortcuts: <kbd>Space</kbd> to reveal, <kbd>1</kbd>–<kbd>4</kbd> to rate.</p>
+        </div>
+      </aside>
+    </div>`;
+
+  $("#startBtn") && ($("#startBtn").onclick = () => startSession());
+  $("#minus").onclick = () => { S.newLimit = Math.max(0, S.newLimit - 5); save(); viewToday(); };
+  $("#plus").onclick = () => { S.newLimit = Math.min(50, S.newLimit + 5); save(); viewToday(); };
+  app.querySelectorAll("[data-study]").forEach(b => b.onclick = () => startSession(b.dataset.study));
+}
+
+let filt = {q:"", topic:"all", open:null};
+function viewCards(){
+  const chips = [["all","All"], ...Object.entries(TOPICS).map(([k,t]) => [k,t.name]), ["flag","⚑ Flagged"]]
+    .map(([k,n]) => `<button class="chip ${filt.topic === k ? "on" : ""}" data-chip="${k}">${n}</button>`).join("");
+  app.innerHTML = `
+    <h1>Cards</h1>
+    <p class="sub">Browse the deck, check answers and see when each card is due.</p>
+    <div class="toolbar"><input class="search" id="q" placeholder="Search questions and answers…" value="${filt.q.replace(/"/g,"&quot;")}"></div>
+    <div class="chips">${chips}</div>
+    <section class="panel pad" id="list"></section>`;
+  const q = $("#q");
+  q.oninput = () => { filt.q = q.value; drawList(); };
+  app.querySelectorAll("[data-chip]").forEach(b => b.onclick = () => { filt.topic = b.dataset.chip; viewCards(); });
+  drawList();
+}
+function drawList(){
+  const term = filt.q.trim().toLowerCase();
+  const rows = ORDER.filter(c =>
+    (filt.topic === "all" || (filt.topic === "flag" ? S.flags[c.id] : c.t === filt.topic)) &&
+    (!term || (c.q + " " + c.a + " " + c.why + " " + (c.opts||[]).join(" ")).toLowerCase().includes(term)));
+  const list = $("#list");
+  if (!rows.length){ list.innerHTML = `<div class="empty">${filt.topic === "flag" ? "No flagged cards. Use ⚑ Flag during a session to mark a card for review." : "No cards match."}</div>`; return; }
+  list.innerHTML = `<div class="note" style="margin-bottom:6px">${rows.length} card${rows.length === 1 ? "" : "s"}</div>` + rows.map(c => {
+    const st = statusOf(c), open = filt.open === c.id;
+    return `<div class="row" data-row="${c.id}">
+      <div class="row-top"><span class="dot" style="background:${TOPICS[c.t].color}"></span>
+        <div class="rq">${c.q}</div>
+        ${S.flags[c.id] ? `<span class="flagmark">⚑</span>` : ""}
+        <span class="status ${st.cls}">${st.txt}</span></div>
+      ${open ? `<div class="row-body">
+        ${c.opts ? `<ol type="A">${c.opts.map((o,i) => `<li class="${c.ans.includes(i) ? "ok" : ""}">${o}${c.ans.includes(i) ? " ✓" : ""}</li>`).join("")}</ol>` : ""}
+        <div class="ans">${c.a}</div><div class="why">${c.why}</div></div>` : ""}
+    </div>`;
+  }).join("");
+  list.querySelectorAll("[data-row]").forEach(r => r.onclick = () => { filt.open = filt.open === r.dataset.row ? null : r.dataset.row; drawList(); });
+}
+
+function viewProgress(){
+  const ph = {new:0, learning:0, young:0, mature:0};
+  CARDS.forEach(c => { const s = prog(c.id);
+    if (s.phase === "new") ph.new++; else if (s.phase !== "review") ph.learning++; else if (s.ivl >= 21) ph.mature++; else ph.young++; });
+  const learned = ph.young + ph.mature;
+  const days = [...Array(7)].map((_,i) => {
+    const start = i === 0 ? 0 : endOfDay(now() + (i-1)*DAY) + 1, end = endOfDay(now() + i*DAY);
+    const n = CARDS.filter(c => { const s = prog(c.id); return s.phase !== "new" && s.due >= start && s.due <= end; }).length;
+    const lbl = i === 0 ? "Today" : new Date(now() + i*DAY).toLocaleDateString(undefined,{weekday:"short"});
+    return {n, lbl, today:i === 0};
+  });
+  const max = Math.max(1, ...days.map(d => d.n));
+  const areas = Object.entries(TOPICS).map(([k,t]) => {
+    const cs = CARDS.filter(c => c.t === k), l = cs.filter(c => prog(c.id).phase === "review").length, pct = Math.round(100*l/cs.length);
+    return `<div class="area" style="grid-template-columns:10px 1fr 48px">
+      <span class="dot" style="background:${t.color}"></span>
+      <div><div class="name">${t.name}</div><div class="bar"><i style="width:${pct}%;background:${t.color}"></i></div></div>
+      <b style="text-align:right;font-size:14px">${pct}%</b></div>`;
+  }).join("");
+
+  app.innerHTML = `
+    <h1>Progress</h1>
+    <p class="sub">Readiness by exam area and what's coming up this week.</p>
+    <div class="kpis">
+      <div class="panel pad kpi"><div class="k">Learned</div><div class="v">${Math.round(100*learned/CARDS.length)}%</div></div>
+      <div class="panel pad kpi"><div class="k">Learning now</div><div class="v">${ph.learning}</div></div>
+      <div class="panel pad kpi"><div class="k">Not started</div><div class="v">${ph.new}</div></div>
+      <div class="panel pad kpi"><div class="k">Total reviews</div><div class="v">${S.total || 0}</div></div>
+    </div>
+    <div class="grid2">
+      <section class="panel pad"><h2>Readiness by exam area</h2>${areas}
+        <p class="note" style="margin:12px 0 0">“Learned” means you've passed a card's learning steps and it's now on a review schedule (1 day or longer).</p></section>
+      <aside class="side"><div class="panel pad"><h2>Reviews due, next 7 days</h2>
+        <div class="fc">${days.map(d => `<div class="col"><span class="n">${d.n}</span><div class="b ${d.today ? "today" : ""}" style="height:${Math.round(100*d.n/max)}px"></div><span class="d">${d.lbl}</span></div>`).join("")}</div>
+        <p class="note" style="margin:12px 0 0">New cards aren't counted here; they're added each day up to your daily limit.</p></div></aside>
+    </div>`;
+}
+
+/* =========================================================
+   STUDY SESSION
+   ========================================================= */
+let Q = [], cur = null, revealed = false, picked = new Set(), sess = null;
+const study = $("#study"), sBody = $("#sBody"), sFoot = $("#sFoot");
+
+function startSession(topic){
+  rollDay();
+  const b = buckets(topic);
+  const nNew = topic ? Math.min(b.fresh.length, Math.max(newLeft(), 5)) : Math.min(newLeft(), b.fresh.length);
+  const reviews = [...b.learning, ...b.review], news = b.fresh.slice(0, nNew);
+  // Interleave: one new card after every two reviews
+  Q = []; let i = 0, j = 0;
+  while (i < reviews.length || j < news.length){
+    if (i < reviews.length) Q.push(reviews[i++]);
+    if (i < reviews.length) Q.push(reviews[i++]);
+    if (j < news.length) Q.push(news[j++]);
+  }
+  if (!Q.length){ toast("Nothing due in this area right now."); return; }
+  sess = {done:0, grades:[0,0,0,0], topic, ids:new Set()};
+  study.hidden = false; document.body.style.overflow = "hidden";
+  next();
+}
+
+function next(){
+  if (!Q.length) return finish();
+  cur = Q.shift(); revealed = false; picked = new Set();
+  drawCard();
+}
+
+function drawCard(){
+  const c = cur, kind = c.kind || "recall", t = TOPICS[c.t];
+  const left = Q.length + 1, pct = Math.round(100*sess.done/(sess.done + left));
+  $("#sBar").style.width = pct + "%";
+  $("#sLeft").textContent = left + " left";
+
+  let verdict = "";
+  if (revealed && c.opts && picked.size){
+    const right = picked.size === c.ans.length && c.ans.every(i => picked.has(i));
+    verdict = `<span class="verdict ${right ? "y" : "n"}">${right ? "Correct" : "Not quite"}</span>`;
+  }
+  const opts = c.opts ? `<ul class="opts">${c.opts.map((o,i) => {
+    let cls = "";
+    if (revealed){ if (c.ans.includes(i)) cls = "ok"; else if (picked.has(i)) cls = "bad"; }
+    else if (picked.has(i)) cls = "picked";
+    return `<li><button class="opt ${cls}" data-opt="${i}" ${revealed ? "disabled" : ""}><span class="lt">${"ABCDE"[i]}</span><span>${o}</span></button></li>`;
+  }).join("")}</ul>` : "";
+
+  sBody.innerHTML = `<div class="card">
+    <div class="c-meta">
+      <span class="tag"><span class="dot" style="background:${t.color};width:8px;height:8px"></span>${t.name}</span>
+      <span class="tag kind">${KIND_LABEL[kind]}</span>
+      <button class="flag ${S.flags[c.id] ? "on" : ""}" id="flagBtn" title="Flag this card (F)">⚑ ${S.flags[c.id] ? "Flagged" : "Flag"}</button>
+    </div>
+    <div class="q">${c.q}</div>
+    ${opts}
+    ${revealed ? `<div class="answer">${verdict}
+      <div class="a-lbl">Answer</div><div class="a">${c.a}</div>
+      <div class="why"><b>Why: </b>${c.why}</div></div>` : ""}
+  </div>`;
+
+  if (!revealed){
+    sFoot.innerHTML = `<button class="btn reveal" id="revealBtn">${c.opts ? (picked.size ? "Check answer" : "Show answer") : "Show answer"} <kbd style="background:transparent;color:#c7d2fe;border-color:#818cf8">Space</kbd></button>`;
+    $("#revealBtn").onclick = reveal;
+  } else {
+    const s = prog(c.id), names = ["Again","Hard","Good","Easy"], cls = ["again","hard","good","easy"];
+    sFoot.innerHTML = `<div class="grades">${names.map((n,g) =>
+      `<button class="g ${cls[g]}" data-g="${g}"><span class="gl">${n}</span><span class="gi">${fmt(plan(s,g).ms)}</span><kbd>${g+1}</kbd></button>`).join("")}</div>`;
+    sFoot.querySelectorAll("[data-g]").forEach(b => b.onclick = () => grade(+b.dataset.g));
+  }
+  sBody.querySelectorAll("[data-opt]").forEach(b => b.onclick = () => {
+    const i = +b.dataset.opt;
+    if (c.kind === "mc"){ picked = picked.has(i) ? new Set() : new Set([i]); }
+    else picked.has(i) ? picked.delete(i) : picked.add(i);
+    drawCard();
+  });
+  $("#flagBtn").onclick = toggleFlag;
+  sBody.scrollTop = 0;
+}
+
+function reveal(){ if (!revealed){ revealed = true; drawCard(); } }
+function toggleFlag(){
+  if (S.flags[cur.id]) delete S.flags[cur.id]; else S.flags[cur.id] = true;
+  save(); drawCard(); toast(S.flags[cur.id] ? "Flagged for review" : "Flag removed");
+}
+
+function grade(g){
+  if (!revealed) return;
+  rollDay();
+  const s0 = prog(cur.id), wasNew = s0.phase === "new";
+  const {ms, s} = plan(s0, g);
+  s.due = now() + ms; s.reps = (s.reps || 0) + 1;
+  S.cards[cur.id] = s;
+  if (wasNew) S.today.newSeen++;
+  S.today.reviewed++; S.total = (S.total || 0) + 1;
+  if (g >= 2) S.today.good++;
+  if (S.lastDay !== S.day){ S.streak = S.lastDay === dayKey(now() - DAY) ? (S.streak || 0) + 1 : 1; S.lastDay = S.day; }
+  sess.done++; sess.grades[g]++; sess.ids.add(cur.id);
+  // Short intervals come back later in this same session
+  if (ms <= 20*MIN) Q.splice(Math.min(Q.length, g === 0 ? 3 : 6), 0, cur);
+  save(); next();
+}
+
+function finish(){
+  $("#sBar").style.width = "100%"; $("#sLeft").textContent = "Done";
+  const n = sess.done, good = sess.grades[2] + sess.grades[3];
+  const tomorrow = CARDS.filter(c => { const s = prog(c.id); return s.phase !== "new" && s.due > endOfDay() && s.due <= endOfDay(now() + DAY); }).length;
+  sBody.innerHTML = `<div class="done">
+    <div class="check"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h1>Session complete</h1>
+    <p class="sub" style="margin:0">${sess.topic ? TOPICS[sess.topic].name + " · " : ""}Nice work. Your next reviews are scheduled.</p>
+    <div class="done-stats">
+      <div><b>${sess.ids.size}</b><span>cards</span></div>
+      <div><b>${n ? Math.round(100*good/n) : 0}%</b><span>Good or Easy</span></div>
+      <div><b>${tomorrow}</b><span>due tomorrow</span></div>
+    </div>
+  </div>`;
+  sFoot.innerHTML = `<button class="btn" id="homeBtn">Back to Today</button>`;
+  $("#homeBtn").onclick = closeStudy;
+}
+
+function closeStudy(){
+  study.hidden = true; document.body.style.overflow = ""; sess = null; cur = null;
+  if (location.hash !== "#today" && location.hash !== "") location.hash = "#today"; else route();
+}
+
+document.addEventListener("keydown", e => {
+  if (!$("#modal").hidden){ if (e.key === "Escape") closeModal(); return; }
+  if (study.hidden || !sess) return;
+  if (e.key === "Escape"){ closeStudy(); return; }
+  if (!cur) { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); closeStudy(); } return; }
+  if (e.key === " " || e.key === "Enter"){ e.preventDefault(); reveal(); return; }
+  if (e.key === "f" || e.key === "F"){ toggleFlag(); return; }
+  if (!revealed && cur.opts && /^[a-e]$/i.test(e.key)){
+    const btn = sBody.querySelector(`[data-opt="${"abcde".indexOf(e.key.toLowerCase())}"]`); btn && btn.click(); return;
+  }
+  if (revealed && ["1","2","3","4"].includes(e.key)) grade(+e.key - 1);
+});
+$("#closeStudy").onclick = closeStudy;
+
+/* =========================================================
+   SETTINGS + DEMO TOOLS
+   ========================================================= */
+function openSettings(confirmReset){
+  const m = $("#modal");
+  m.innerHTML = `<div class="sheet" role="dialog" aria-label="Settings">
+    ${confirmReset ? `
+      <h3>Reset all progress?</h3>
+      <p class="note">This clears every card's schedule, your streak and flags in this browser. It can't be undone.</p>
+      <div class="actions"><button class="btn ghost sm" id="mBack">Cancel</button><button class="btn danger sm" id="mReset">Reset progress</button></div>`
+    : `
+      <h3>Settings</h3>
+      <p class="note" style="margin:0">Progress is saved in this browser only.</p>
+      <div class="sec"><h4>New cards per day</h4>
+        <select id="mLimit">${[5,10,15,20,25,30,40,50].map(n => `<option ${n === S.newLimit ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="sec"><h4>Demo clock</h4>
+        <p class="note" style="margin:0 0 10px">Jump ahead to see cards come back for review. ${S.offset ? `Currently +${Math.round(S.offset/DAY)} day(s).` : ""}</p>
+        <button class="btn ghost sm" id="mJump">Jump ahead 1 day</button>
+        ${S.offset ? `<button class="btn ghost sm" id="mNow">Back to real time</button>` : ""}</div>
+      <div class="sec"><h4>Reset</h4>
+        <button class="btn ghost sm" id="mAsk" style="color:var(--again)">Reset all progress…</button></div>
+      <div class="actions"><button class="btn sm" id="mClose">Done</button></div>`}
+  </div>`;
+  m.hidden = false;
+  m.onclick = e => { if (e.target === m) closeModal(); };
+  if (confirmReset){
+    $("#mBack").onclick = () => openSettings(false);
+    $("#mReset").onclick = () => { S = fresh(); save(); closeModal(); toast("Progress reset"); };
+  } else {
+    $("#mLimit").onchange = e => { S.newLimit = +e.target.value; save(); };
+    $("#mJump").onclick = () => { S.offset = (S.offset || 0) + DAY; save(); closeModal(); toast("Moved the demo clock ahead 1 day"); };
+    $("#mNow") && ($("#mNow").onclick = () => { S.offset = 0; save(); closeModal(); toast("Back to real time"); });
+    $("#mAsk").onclick = () => openSettings(true);
+    $("#mClose").onclick = closeModal;
+  }
+}
+function closeModal(){ $("#modal").hidden = true; route(); }
+$("#settingsBtn").onclick = () => openSettings(false);
+
+let tt;
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 2000); }
+
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>
