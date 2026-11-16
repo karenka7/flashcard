@@ -325,6 +325,7 @@ footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
       <a href="#today" data-v="today">Today</a>
       <a href="#cards" data-v="cards">Cards</a>
       <a href="#progress" data-v="progress">Progress</a>
+      <a href="#merch" data-v="merch">Merch</a>
     </nav>
     <div class="top-right">
       <span class="clock" id="clock" hidden></span>
@@ -349,6 +350,7 @@ footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
   <a href="#today" data-v="today"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Today</a>
   <a href="#cards" data-v="cards"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>Cards</a>
   <a href="#progress" data-v="progress"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progress</a>
+  <a href="#merch" data-v="merch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>Merch</a>
 </nav>
 
 <div class="study" id="study" hidden role="dialog" aria-modal="true" aria-label="Study session">
@@ -899,11 +901,8 @@ function viewToday(){
   }
 
   app.innerHTML = `
-    <div class="head-row">
-      <div><h1>${greet()}</h1>
-      <p class="sub">${esc(d.name)} · ${esc(deckDesc(d))}</p></div>
-      <a class="btn ghost sm" href="#merch" style="text-decoration:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>Merch</a>
-    </div>
+    <h1>${greet()}</h1>
+    <p class="sub">${esc(d.name)} · ${esc(deckDesc(d))}</p>
     ${deckBar(d)}
 
     <section class="hero">
@@ -1550,7 +1549,7 @@ function viewMerch(){
   const n = cartCount();
   app.innerHTML = `
     <div class="head-row">
-      <div><a class="back" href="#today">← Home</a><h1>Merch</h1><p class="sub">Study gear to go with your decks.</p></div>
+      <div><h1>Merch</h1><p class="sub">Study gear to go with your decks.</p></div>
       <button class="btn ${n ? "" : "ghost"} sm" id="cartBtn">Cart${n ? ` · ${n}` : ""}</button>
     </div>
     <p class="demo-note"><b>Demo store.</b> Products and prices are placeholders. Nothing is for sale and no payment is taken.</p>
