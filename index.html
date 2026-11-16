@@ -123,6 +123,13 @@ h2{font-size:16px;margin:0 0 14px;font-weight:600;letter-spacing:-.01em}
 .cart-line .step{gap:6px}
 .cart-line .step .val{font-size:14px;min-width:20px}
 .cart-total{display:flex;justify-content:space-between;font-weight:700;font-size:16px;padding-top:14px}
+.c-img{display:block;max-width:100%;max-height:300px;border-radius:12px;border:1px solid var(--line);background:#fff;margin-top:16px}
+.a + .c-img{margin:-4px 0 16px}
+.row-body .c-img{max-height:180px;margin:0 0 10px}
+.imgf{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.imgf img{width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.imgf .upl{cursor:pointer}
+.imgtag{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--line2);border-radius:99px;padding:2px 8px;flex:none}
 .src{font-size:12.5px;color:var(--muted);margin-top:8px;word-break:break-word}
 
 .grid2{display:grid;grid-template-columns:1fr 320px;gap:24px}
@@ -333,7 +340,7 @@ footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
 
 <footer>
   <div class="wrap">
-    <div>Flick prototype · NCLEX-RN demo deck (50 cards) plus any decks you add. Demo cards were written for this prototype, not taken from a test bank, and should be reviewed by a nurse educator. Not clinical guidance.</div>
+    <div>Flick prototype · NCLEX-RN demo deck (50 cards), an Anatomy demo deck with simplified diagrams (6 cards), plus any decks you add. Demo cards were written for this prototype, not taken from a test bank, and should be reviewed by a nurse educator. Not clinical guidance.</div>
     <div>Progress and your decks are saved in this browser only.</div>
   </div>
 </footer>
@@ -561,6 +568,88 @@ const ORDER = (() => {
 })();
 const KIND_LABEL = {mc:"Multiple choice", sata:"Select all that apply", recall:"Flashcard"};
 const RN = {id:"rn", name:"NCLEX-RN", builtin:true, color:"#4f46e5", topics:TOPICS, cards:ORDER};
+
+/* =========================================================
+   ANATOMY demo deck — six cards that show images on cards:
+   three with a diagram on the front, three with one on the back.
+   The diagrams are simplified drawings made for this prototype
+   (inline SVG, so the app stays one file). Card images live in
+   imgQ (front) and imgA (back) as data URIs, the same fields
+   used for images people upload to their own cards.
+   ========================================================= */
+const svgUri = body => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+  `<svg xmlns='http://www.w3.org/2000/svg' width='480' height='300' viewBox='0 0 480 300' font-family='Helvetica,Arial,sans-serif'><rect width='480' height='300' fill='#fff'/>${body}</svg>`);
+const svgMark = (x, y, t = "?") => `<circle cx='${x}' cy='${y}' r='16' fill='#0f172a'/><text x='${x}' y='${y + 7}' text-anchor='middle' font-size='19' font-weight='700' fill='#fff'>${t}</text>`;
+const svgHeart = extra => `
+  <g stroke-width='3' stroke-linejoin='round'>
+    <rect x='120' y='44' width='110' height='72' rx='18' fill='#dbeafe' stroke='#2563eb'/>
+    <rect x='250' y='44' width='110' height='72' rx='18' fill='#fee2e2' stroke='#dc2626'/>
+    <path d='M120 128 L230 128 L230 240 C175 223 130 183 120 128 Z' fill='#dbeafe' stroke='#2563eb'/>
+    <path d='M250 128 L360 128 C358 193 315 243 250 263 Z' fill='#fee2e2' stroke='#dc2626'/>
+  </g>${extra}
+  <text x='240' y='290' text-anchor='middle' font-size='12' fill='#64748b'>Front view: the heart's left side is on your right</text>`;
+const ANAT_IMG = {
+  heartQ: svgUri(svgHeart(svgMark(298, 178))),
+  heartFlow: svgUri(svgHeart(`
+    ${svgMark(175, 70, "1")}${svgMark(180, 160, "2")}${svgMark(305, 70, "3")}${svgMark(298, 160, "4")}
+    <g font-size='12' fill='#0f172a' text-anchor='middle' font-weight='600'>
+      <text x='175' y='105'>Right atrium</text><text x='180' y='195'>Right ventricle</text>
+      <text x='305' y='105'>Left atrium</text><text x='298' y='195'>Left ventricle</text></g>
+    <g font-size='12.5' fill='#334155'>
+      <text x='112' y='84' text-anchor='end'>From the body →</text><text x='112' y='170' text-anchor='end'>← To the lungs</text>
+      <text x='368' y='84'>← From the lungs</text><text x='368' y='170'>To the body →</text></g>`)),
+  neuron: svgUri(`
+    <g stroke='#7c3aed' stroke-width='5' stroke-linecap='round' fill='none'>
+      <path d='M95 150 L48 86 M62 105 L34 108 M95 150 L28 152 M95 150 L50 222 M64 199 L36 206 M95 150 L104 66 M101 92 L126 70 M95 150 L110 238'/>
+      <path d='M127 150 H400 M400 150 L440 110 M400 150 H452 M400 150 L440 190' stroke-width='6'/></g>
+    <g fill='#7c3aed'><circle cx='443' cy='107' r='7'/><circle cx='457' cy='150' r='7'/><circle cx='443' cy='193' r='7'/></g>
+    <circle cx='95' cy='150' r='32' fill='#ddd6fe' stroke='#7c3aed' stroke-width='3'/><circle cx='95' cy='150' r='11' fill='#7c3aed'/>
+    <g fill='#fde68a' stroke='#d97706' stroke-width='2.5'><rect x='150' y='138' width='46' height='24' rx='12'/><rect x='206' y='138' width='46' height='24' rx='12'/><rect x='262' y='138' width='46' height='24' rx='12'/><rect x='318' y='138' width='46' height='24' rx='12'/></g>
+    <path d='M285 136 V96' stroke='#0f172a' stroke-width='2.5'/>${svgMark(285, 80)}
+    <text x='240' y='290' text-anchor='middle' font-size='12' fill='#64748b'>A nerve cell (neuron)</text>`),
+  bone: svgUri(`
+    <g fill='#f3e8d0' stroke='#a16207' stroke-width='5'><circle cx='112' cy='130' r='30'/><circle cx='112' cy='174' r='30'/><circle cx='368' cy='130' r='30'/><circle cx='368' cy='174' r='30'/><rect x='118' y='130' width='244' height='44'/></g>
+    <g fill='#f3e8d0'><circle cx='112' cy='130' r='28'/><circle cx='112' cy='174' r='28'/><circle cx='368' cy='130' r='28'/><circle cx='368' cy='174' r='28'/><rect x='110' y='132.5' width='260' height='39'/></g>
+    <path d='M146 116 V102 H334 V116' fill='none' stroke='#0f172a' stroke-width='2.5'/>${svgMark(240, 80)}
+    <text x='240' y='290' text-anchor='middle' font-size='12' fill='#64748b'>A long bone, such as the femur (simplified)</text>`),
+  quads: svgUri(`
+    <rect x='140' y='40' width='200' height='230' rx='42' fill='#f8fafc' stroke='#64748b' stroke-width='3'/>
+    <path d='M240 40 V270 M140 155 H340' stroke='#64748b' stroke-width='2' stroke-dasharray='6 5'/><circle cx='240' cy='155' r='5' fill='#64748b'/>
+    <g text-anchor='middle' fill='#0f172a'><g font-size='17' font-weight='700'><text x='190' y='88'>RUQ</text><text x='290' y='88'>LUQ</text><text x='190' y='204'>RLQ</text><text x='290' y='204'>LLQ</text></g>
+      <g font-size='12.5' fill='#334155'><text x='190' y='108'>Liver,</text><text x='190' y='124'>gallbladder</text><text x='290' y='108'>Stomach,</text><text x='290' y='124'>spleen</text><text x='190' y='224'>Appendix</text><text x='290' y='224'>Sigmoid colon</text></g>
+      <g font-size='12' fill='#64748b'><text x='190' y='27'>Patient's right</text><text x='290' y='27'>Patient's left</text></g></g>`),
+  skin: svgUri(`
+    <rect x='50' y='40' width='250' height='35' fill='#f5d0a9'/><rect x='50' y='75' width='250' height='110' fill='#fbc8c8'/><rect x='50' y='185' width='250' height='70' fill='#fde68a'/>
+    <path d='M50 150 C95 128 130 172 175 148 S255 128 300 150' fill='none' stroke='#dc2626' stroke-width='3'/>
+    <g fill='#fef9c3' stroke='#eab308' stroke-width='1.5'><circle cx='85' cy='220' r='20'/><circle cx='135' cy='222' r='22'/><circle cx='187' cy='219' r='20'/><circle cx='236' cy='222' r='21'/><circle cx='280' cy='220' r='16'/></g>
+    <rect x='50' y='40' width='250' height='215' fill='none' stroke='#64748b' stroke-width='3'/><path d='M50 75 H300 M50 185 H300' stroke='#64748b' stroke-width='2'/>
+    <g fill='#0f172a'><g font-size='15' font-weight='700'><text x='315' y='63'>Epidermis</text><text x='315' y='128'>Dermis</text><text x='315' y='218'>Hypodermis</text></g>
+      <g font-size='11.5' fill='#475569'><text x='315' y='145'>vessels, nerves, glands</text><text x='315' y='235'>subcutaneous fat</text></g></g>
+    <text x='175' y='28' text-anchor='middle' font-size='12' fill='#64748b'>Skin surface</text>`)
+};
+const ANAT_CARDS = [
+/* ---------- image on the front ---------- */
+{id:"an1",imgQ:ANAT_IMG.heartQ,q:`This diagram shows the heart from the front. Which chamber is marked with the question mark?`,
+ a:`The left ventricle.`,
+ why:`In a front view the heart's left side is on your right. The left ventricle has the thickest wall because it pumps blood to the whole body through the aorta. When it fails, blood backs up into the lungs.`},
+{id:"an2",imgQ:ANAT_IMG.neuron,q:`Which part of the neuron is marked?`,
+ a:`The myelin sheath.`,
+ why:`Myelin insulates the axon so the signal jumps from gap to gap (the nodes of Ranvier) and travels much faster. Multiple sclerosis damages myelin in the brain and spinal cord, which slows or blocks signals.`},
+{id:"an3",imgQ:ANAT_IMG.bone,q:`Which part of a long bone does the bracket mark?`,
+ a:`The diaphysis (the shaft).`,
+ why:`The diaphysis is a tube of compact bone around the medullary cavity, which holds marrow. The rounded ends are the epiphyses; in children the growth plate sits between the two.`},
+/* ---------- image on the back ---------- */
+{id:"an4",imgA:ANAT_IMG.quads,q:`Name the four abdominal quadrants and one key organ in each.`,
+ a:`RUQ: liver and gallbladder. LUQ: stomach and spleen. RLQ: appendix. LLQ: sigmoid colon.`,
+ why:`Quadrants are named from the patient's side, so the patient's right is on your left. Pain in the RLQ can point to appendicitis. When assessing the abdomen, listen before you palpate so you don't change the bowel sounds.`},
+{id:"an5",imgA:ANAT_IMG.skin,q:`What are the three layers of the skin, from the surface down?`,
+ a:`Epidermis, dermis, hypodermis (subcutaneous tissue).`,
+ why:`The epidermis has no blood vessels. The dermis holds vessels, nerves, hair follicles and glands. The hypodermis is mostly fat, and it is where subcutaneous injections go.`},
+{id:"an6",imgA:ANAT_IMG.heartFlow,q:`Trace the path of blood through the four chambers of the heart, starting as it returns from the body.`,
+ a:`Right atrium → right ventricle → lungs → left atrium → left ventricle → body.`,
+ why:`The right side sends oxygen-poor blood to the lungs through the pulmonary artery; the left side sends oxygen-rich blood to the body through the aorta.`}
+];
+const ANAT = {id:"anat", name:"Anatomy", builtin:true, color:"#0d9488", cards:ANAT_CARDS};
 const PALETTE = ["#0891b2","#db2777","#16a34a","#ea580c","#7c3aed","#ca8a04","#475569","#0d9488"];
 
 /* =========================================================
@@ -606,7 +695,7 @@ function load(){
     return s;
   } catch(e){ return null; }
 }
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); return true; } catch(e){ return false; } }
 
 const now = () => Date.now() + (S.offset || 0);
 const dayKey = t => { const d = new Date(t); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
@@ -620,9 +709,9 @@ const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(
 const esc = s => String(s ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 
 /* ---------- decks ---------- */
-const allDecks = () => [RN, ...S.decks];
+const allDecks = () => [RN, ANAT, ...S.decks];
 function curDeck(){ const d = allDecks().find(x => x.id === S.deck); if (!d){ S.deck = "rn"; return RN; } return d; }
-const cardsOf = d => d.builtin ? ORDER : d.cards;
+const cardsOf = d => d.cards;
 const dk = id => (S.dk[id] ||= {newLimit:20, newSeen:0});
 const topicOf = (c, d) => (d.topics && c.t && d.topics[c.t]) || {name:d.name, color:d.color};
 const flaggedIn = d => cardsOf(d).filter(c => S.flags[c.id]);
@@ -735,13 +824,14 @@ function bindDeckBar(){
   app.querySelectorAll("[data-newdeck]").forEach(b => b.onclick = openNewDeck);
 }
 const deckSub = d => d.builtin
-  ? `Demo deck of ${CARDS.length} cards across ${Object.keys(TOPICS).length} exam areas`
+  ? (d.topics ? `Demo deck of ${d.cards.length} cards across ${Object.keys(d.topics).length} exam areas` : `Demo deck of ${d.cards.length} cards with diagrams`)
   : `Your deck · ${d.cards.length} card${d.cards.length === 1 ? "" : "s"}`;
 /* Deck description (Home + Cards) and instructions (Cards): the defaults above/below
    apply until someone edits them on the Cards page; edits are kept in S.meta[deckId]. */
 const DEFAULT_INSTR = "Browse the deck, check answers and see when each card is due.";
 const deckDesc = d => (S.meta[d.id] && S.meta[d.id].desc) || deckSub(d);
 const deckInstr = d => (S.meta[d.id] && S.meta[d.id].instr) || DEFAULT_INSTR;
+const cardImg = (src, alt) => src ? `<img class="c-img" src="${esc(src)}" alt="${alt}">` : "";
 const srcHtml = s => /^https?:\/\/\S+$/.test(s) ? `<a href="${esc(s)}" target="_blank" rel="noopener noreferrer">${esc(s)}</a>` : esc(s);
 
 /* Heatmap: one calendar month of S.hist; hmOff is -1, 0 or +1 months from the current month */
@@ -801,10 +891,10 @@ function viewToday(){
           <div class="bar"><i style="width:${Math.round(100*learned/cs.length)}%;background:${d.color}"></i></div></div></div>`
         : `<p class="note" style="margin:0 0 4px">This deck is empty. Add cards one at a time, or paste a list (works with text exported from Quizlet or Anki).</p>`}
       <div class="btn-row" style="margin-top:14px">
-        <button class="btn sm" data-addcards>+ Add cards</button>
+        ${d.builtin ? "" : `<button class="btn sm" data-addcards>+ Add cards</button>`}
         <a class="btn ghost sm" href="#cards" style="text-decoration:none">Browse cards</a>
-        <button class="btn ghost sm" data-rename>Rename</button>
-        <button class="btn ghost sm textred" data-deldeck>Delete deck</button>
+        ${d.builtin ? "" : `<button class="btn ghost sm" data-rename>Rename</button>
+        <button class="btn ghost sm textred" data-deldeck>Delete deck</button>`}
       </div></section>`;
   }
 
@@ -934,12 +1024,14 @@ function drawList(){
     const st = statusOf(c), open = filt.open === c.id, t = topicOf(c, d);
     return `<div class="row" data-row="${c.id}">
       <div class="row-top"><span class="dot" style="background:${t.color}"></span>
-        <div class="rq">${esc(c.q)}</div>
+        <div class="rq">${esc(c.q) || "(image only)"}</div>
+        ${c.imgQ || c.imgA ? `<span class="imgtag">Image</span>` : ""}
         ${S.flags[c.id] ? `<span class="flagmark">⚑</span>` : ""}
         <span class="status ${st.cls}">${st.txt}</span></div>
       ${open ? `<div class="row-body" data-stop>
+        ${cardImg(c.imgQ, "Front image")}
         ${c.opts ? `<ol type="A">${c.opts.map((o,i) => `<li class="${c.ans.includes(i) ? "ok" : ""}">${esc(o)}${c.ans.includes(i) ? " ✓" : ""}</li>`).join("")}</ol>` : ""}
-        <div class="ans">${esc(c.a)}</div>${c.why ? `<div class="why">${esc(c.why)}</div>` : ""}
+        <div class="ans">${esc(c.a)}</div>${cardImg(c.imgA, "Back image")}${c.why ? `<div class="why">${esc(c.why)}</div>` : ""}
         ${c.src ? `<div class="src">Source: ${srcHtml(c.src)}</div>` : ""}
         <div class="btn-row">
           <button class="btn ghost sm" data-flagrow="${c.id}">${S.flags[c.id] ? "Remove flag" : "⚑ Flag"}</button>
@@ -1108,9 +1200,10 @@ function drawCard(){
       <button class="flag ${S.flags[c.id] ? "on" : ""}" id="flagBtn" title="Save this card to your Flagged list (F)">⚑ ${S.flags[c.id] ? "Flagged" : "Flag"}</button>
     </div>
     <div class="q">${esc(c.q)}</div>
+    ${cardImg(c.imgQ, "Image for this question")}
     ${opts}
     ${revealed ? `<div class="answer">${verdict ? `<div>${verdict}</div>` : ""}
-      <div class="a-lbl">Answer</div><div class="a">${esc(c.a)}</div>
+      <div class="a-lbl">Answer</div><div class="a">${esc(c.a)}</div>${cardImg(c.imgA, "Image for this answer")}
       ${c.why ? `<div class="why"><b>Why: </b>${esc(c.why)}</div>` : ""}
       ${c.src ? `<div class="src">Source: ${srcHtml(c.src)}</div>` : ""}</div>` : ""}
   </div>`;
@@ -1257,9 +1350,43 @@ function openNewDeck(){
   };
 }
 
+/* Images picked in the card form, as data URIs, until the card is saved */
+let draft = {q:null, a:null};
+/* Uploaded photos are shrunk to at most 1000px and saved as JPEG so they fit in browser storage */
+function shrinkImage(file){
+  return new Promise((ok, fail) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 1000 / Math.max(im.width, im.height)), cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(im.width * k)); cv.height = Math.max(1, Math.round(im.height * k));
+      const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(im, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url); ok(cv.toDataURL("image/jpeg", 0.8));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); fail(); };
+    im.src = url;
+  });
+}
+function drawImgFields(){
+  $("#modal").querySelectorAll("[data-imgf]").forEach(el => {
+    const side = el.dataset.imgf, src = draft[side], where = side === "q" ? "front" : "back";
+    el.innerHTML = (src ? `<img src="${esc(src)}" alt="Image on the ${where}">` : "")
+      + `<label class="btn ghost sm upl">${src ? "Replace image" : "Upload image"}<input type="file" accept="image/*" hidden></label>`
+      + (src ? `<button class="btn ghost sm textred" type="button" data-rm>Remove</button>` : `<span class="note">Optional picture for the ${where}</span>`);
+    el.querySelector("input").onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      try { draft[side] = await shrinkImage(f); drawImgFields(); }
+      catch(err){ toast("Couldn't read that file. Try a JPG or PNG image."); }
+    };
+    const rm = el.querySelector("[data-rm]"); if (rm) rm.onclick = () => { draft[side] = null; drawImgFields(); };
+  });
+}
+const STORAGE_FULL = "This browser's storage is full, so the card wasn't saved. Try a smaller image or remove some images.";
 function cardFields(c = {}){
+  draft = {q:c.imgQ || null, a:c.imgA || null};
   return `<label class="fl">Front <span>(question)</span><textarea id="cQ" rows="2">${esc(c.q)}</textarea></label>
+    <div class="imgf" data-imgf="q"></div>
     <label class="fl">Back <span>(answer)</span><textarea id="cA" rows="2">${esc(c.a)}</textarea></label>
+    <div class="imgf" data-imgf="a"></div>
     <label class="fl">Explanation <span>(optional, shown under the answer)</span><textarea id="cW" rows="2">${esc(c.why)}</textarea></label>
     <label class="fl">Source <span>(optional: a textbook, page, lecture or link)</span><input id="cS" maxlength="300" value="${esc(c.src)}" placeholder="e.g. Lewis Med-Surg, ch. 34"></label>`;
 }
@@ -1274,12 +1401,14 @@ function openAddCards(mode = "one"){
   $("#modal").querySelectorAll("[data-m]").forEach(b => b.onclick = () => openAddCards(b.dataset.m));
   $("#mDone").onclick = closeModal;
   if (mode === "one"){
-    $("#cQ").focus();
+    $("#cQ").focus(); drawImgFields();
     const add = () => {
       const q = $("#cQ").value.trim(), a = $("#cA").value.trim(), why = $("#cW").value.trim();
-      if (!q || !a){ toast("A card needs a front and a back"); (q ? $("#cA") : $("#cQ")).focus(); return; }
+      const hasQ = q || draft.q, hasA = a || draft.a;
+      if (!hasQ || !hasA){ toast("A card needs a front and a back (text or an image)"); (hasQ ? $("#cA") : $("#cQ")).focus(); return; }
       const src = $("#cS").value.trim();
-      d.cards.push({id:uid("u"), q, a, why, ...(src ? {src} : {})}); save();
+      d.cards.push({id:uid("u"), q, a, why, ...(src ? {src} : {}), ...(draft.q ? {imgQ:draft.q} : {}), ...(draft.a ? {imgA:draft.a} : {})});
+      if (!save()){ d.cards.pop(); toast(STORAGE_FULL); return; }
       toast(`Card added · ${d.cards.length} in ${d.name}`);
       openAddCards("one");
     };
@@ -1299,18 +1428,23 @@ function openEditCard(id){
   const d = curDeck(), c = d.cards && d.cards.find(x => x.id === id); if (!c) return;
   showModal(`<h3>Edit card</h3>${cardFields(c)}
     <div class="actions"><button class="btn ghost sm" id="mCancel">Cancel</button><button class="btn sm" id="mSave">Save</button></div>`);
+  drawImgFields();
   $("#mCancel").onclick = closeModal;
   $("#mSave").onclick = () => {
     const q = $("#cQ").value.trim(), a = $("#cA").value.trim();
-    if (!q || !a){ toast("A card needs a front and a back"); return; }
+    if ((!q && !draft.q) || (!a && !draft.a)){ toast("A card needs a front and a back (text or an image)"); return; }
+    const before = {...c};
     c.q = q; c.a = a; c.why = $("#cW").value.trim();
     const src = $("#cS").value.trim(); if (src) c.src = src; else delete c.src;
-    save(); closeModal(); toast("Card saved");
+    if (draft.q) c.imgQ = draft.q; else delete c.imgQ;
+    if (draft.a) c.imgA = draft.a; else delete c.imgA;
+    if (!save()){ Object.keys(c).forEach(k => delete c[k]); Object.assign(c, before); toast(STORAGE_FULL); return; }
+    closeModal(); toast("Card saved");
   };
 }
 function openDeleteCard(id){
   const d = curDeck(), c = d.cards && d.cards.find(x => x.id === id); if (!c) return;
-  showModal(`<h3>Delete this card?</h3><p class="note">“${esc(c.q.length > 120 ? c.q.slice(0,120) + "…" : c.q)}” and its review history will be removed. This can't be undone.</p>
+  showModal(`<h3>Delete this card?</h3><p class="note">“${esc(c.q.length > 120 ? c.q.slice(0,120) + "…" : c.q || "Image card")}” and its review history will be removed. This can't be undone.</p>
     <div class="actions"><button class="btn ghost sm" id="mCancel">Cancel</button><button class="btn danger sm" id="mDel">Delete card</button></div>`);
   $("#mCancel").onclick = closeModal;
   $("#mDel").onclick = () => {

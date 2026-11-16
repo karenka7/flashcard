@@ -6,7 +6,7 @@ A demo of the **Flick** flashcard concept: a 50-card NCLEX-RN starter deck plus 
 
 ## What's in it
 
-- **Decks** — the built-in NCLEX-RN deck plus any number of your own. Create a deck, add cards one at a time or paste a list (`question | answer | explanation`, or tab-separated text from Quizlet/Anki), edit, delete, rename. New-card limits are per deck.
+- **Decks** — the built-in NCLEX-RN deck, a six-card **Anatomy** demo deck with simplified diagrams (three with the image on the front, three on the back), plus any number of your own. Your own cards can have an **image on the front, the back or both** (Upload image in the card form); uploads are shrunk to 1000px JPEGs and stored in the browser with the deck, so storage space is limited. Create a deck, add cards one at a time or paste a list (`question | answer | explanation`, or tab-separated text from Quizlet/Anki), edit, delete, rename. New-card limits are per deck.
 - **Today** — cards due today (split into review / learning / new, with a note on what "learning" means), one Start button, adjustable new cards per day, study by exam area, and a Flagged box with **Review flagged**
 - **Study mode** — full screen; flip cards, multiple choice and select-all-that-apply; a "Why" rationale on every card; live new / learning / review counts; flag a card for review
   - **Two-step grading** (default, after Osmosis): pick confidence (Low / Medium / High) before the answer, then **Missed it** / **Got it**, each showing the next interval. Got it + Low/Medium/High maps to Hard/Good/Easy. The session summary counts confident misses.
