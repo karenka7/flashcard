@@ -1,23 +1,27 @@
 # Flick — NCLEX-RN flashcard prototype
 
-A demo of the **Flick** flashcard concept: a 50-card NCLEX-RN deck with spaced-repetition scheduling, in one static page.
+A demo of the **Flick** flashcard concept: a 50-card NCLEX-RN starter deck plus your own decks, with spaced-repetition scheduling, in one static page.
 
 **Live target:** https://sashalosh.shop/flashcards/
 
 ## What's in it
 
-- **Today** — cards due today, one Start button, adjustable new cards per day, study by exam area
-- **Study mode** — full screen; flip cards, multiple choice and select-all-that-apply; a "Why" rationale on every card; grade buttons show the next interval (Again / Hard / Good / Easy); flag a card for review
-- **Cards** — search and filter the deck by exam area or flagged
+- **Decks** — the built-in NCLEX-RN deck plus any number of your own. Create a deck, add cards one at a time or paste a list (`question | answer | explanation`, or tab-separated text from Quizlet/Anki), edit, delete, rename. New-card limits are per deck.
+- **Today** — cards due today (split into review / learning / new, with a note on what "learning" means), one Start button, adjustable new cards per day, study by exam area, and a Flagged box with **Review flagged**
+- **Study mode** — full screen; flip cards, multiple choice and select-all-that-apply; a "Why" rationale on every card; live new / learning / review counts; flag a card for review
+  - **Two-step grading** (default, after Osmosis): pick confidence (Low / Medium / High) before the answer, then **Missed it** / **Got it**, each showing the next interval. Got it + Low/Medium/High maps to Hard/Good/Easy. The session summary counts confident misses.
+  - **Four-button grading** (Again / Hard / Good / Easy) is still available in Settings.
+  - Learning cards wait their full gap (1–10 min) before coming back; if only those are left, a "back in m:ss" screen offers wait, review early, or finish.
+- **Cards** — search and filter by exam area or flagged; flag/unflag, edit and delete your own cards
 - **Progress** — readiness by exam area and a 7-day review forecast
 - **Demo clock** (Settings) — jump ahead a day to show reviews coming back
 
-Keyboard: `Space` reveal · `1`–`4` grade · `A`–`E` pick an option · `F` flag · `Esc` exit.
+Keyboard: two-step mode `1`–`3` confidence, then `1` Missed / `2` Got it · four-button mode `Space` reveal, `1`–`4` grade · `A`–`E` pick an option · `F` flag · `Esc` exit.
 
 ## How it's built
 
 - `index.html` only: HTML, CSS and vanilla JavaScript, no build step or dependencies (Inter font from Google Fonts).
-- Progress is stored in the visitor's browser (`localStorage`, key `flick-nclex-v1`). No accounts, no backend.
+- Progress and user decks are stored in the visitor's browser (`localStorage`, key `flick-nclex-v1`, state version 2; version 1 progress migrates automatically). No accounts, no backend, so decks don't sync across devices yet.
 - Inside the script, three parts are kept separate to ease a later move to React: **data** (`TOPICS`, `CARDS`), **scheduler** (`plan()`, a simple SM-2-style algorithm with learning steps), and **views**.
 
 ## Deploy
@@ -39,4 +43,5 @@ The cards were written for this prototype, not taken from a test bank. Have a nu
 
 - React front end
 - Accounts and server-side progress (Supabase or a Python/Java API on Postgres)
-- Card authoring and import
+- Anki (.apkg) import and export
+- Sync decks and progress across devices
