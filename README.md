@@ -12,7 +12,9 @@ A demo of the **Flick** flashcard concept: a 50-card NCLEX-RN starter deck plus 
   - **Two-step grading** (default, after Osmosis): pick confidence (Low / Medium / High) before the answer, then **Missed it** / **Got it**, each showing the next interval. Got it + Low/Medium/High maps to Hard/Good/Easy. The session summary counts confident misses.
   - **Four-button grading** (Again / Hard / Good / Easy) is still available in Settings.
   - Learning cards wait their full gap (1–10 min) before coming back; if only those are left, a "back in m:ss" screen offers wait, review early, or finish.
-- **Cards** — search and filter by exam area or flagged; flag/unflag, edit and delete your own cards
+  - The hero also holds the new-cards stepper (beside the due count) and an **activity heatmap**: one calendar month of cards studied per day, darker for more, with arrows for one month back or forward. History starts when this version is first used.
+  - A **Merch** button opens a demo store (`#merch`): four placeholder products, a cart and a pretend checkout. No payment is taken. The product photos and prices are placeholders to replace before launch.
+- **Cards** — search and filter by exam area or flagged; flag/unflag, edit and delete your own cards. **Edit description** changes the deck's description (shown on Today and Cards) and the instructions line (Cards); both fall back to defaults when cleared. Your own cards can carry an optional **Source** (text or a link), shown with the answer.
 - **Progress** — readiness by exam area and a 7-day review forecast
 - **Demo clock** (Settings) — jump ahead a day to show reviews coming back
 
