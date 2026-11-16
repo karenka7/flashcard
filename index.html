@@ -575,8 +575,22 @@ const fresh = () => ({v:2, cards:{}, flags:{}, offset:0, day:null,
   deck:"rn", decks:[], dk:{}, gradeMode:"two",
   meta:{},   // per-deck text edited on the Cards page: {desc, instr}
   hist:{},   // cards studied per day (all decks), keyed by dayKey; feeds the heatmap
-  cart:{}}); // merch demo cart: {productId: qty}
+  cart:{},   // merch demo cart: {productId: qty}
+  sample:null}); // made-up daily counts so the heatmap has colour in demos; null = not seeded yet, {} = removed
 let S = load() || fresh();
+/* Sample heatmap activity: invented counts from the 1st of last month up to yesterday.
+   Kept apart from S.hist (real counts) so it can be removed in Settings without touching real history. */
+function makeSample(){
+  const t = new Date(Date.now()), out = {}; let seed = 20261116;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  for (let d = new Date(t.getFullYear(), t.getMonth() - 1, 1); d < new Date(t.getFullYear(), t.getMonth(), t.getDate()); d.setDate(d.getDate() + 1)){
+    const wk = d.getDay() === 0 || d.getDay() === 6, r = rnd(), size = rnd();
+    if (r < (wk ? 0.45 : 0.18)) continue;                       // rest days, more often at weekends
+    out[d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate()] = Math.round(4 + size * size * (wk ? 35 : 62));
+  }
+  return out;
+}
+if (!S.sample){ S.sample = makeSample(); }
 function load(){
   try {
     const r = localStorage.getItem(KEY); if (!r) return null;
@@ -739,7 +753,7 @@ function heatmap(){
   const todayK = dayKey(now()), eod = endOfDay();
   let total = 0, cells = "<span></span>".repeat(first.getDay());
   for (let n = 1; n <= days; n++){
-    const k = y + "-" + (m + 1) + "-" + n, v = S.hist[k] || 0, fut = new Date(y, m, n).getTime() > eod;
+    const k = y + "-" + (m + 1) + "-" + n, v = (S.hist[k] || 0) + (S.sample[k] || 0), fut = new Date(y, m, n).getTime() > eod;
     const lbl = new Date(y, m, n).toLocaleDateString(undefined, {month:"short", day:"numeric"});
     total += v;
     cells += `<span class="hm-c ${fut ? "fut" : "l" + hmLevel(v)} ${k === todayK ? "today" : ""}" title="${lbl}: ${fut ? "upcoming" : v + (v === 1 ? " card" : " cards") + " studied"}">${n}</span>`;
@@ -753,6 +767,7 @@ function heatmap(){
     <div class="hm-grid">${["S","M","T","W","T","F","S"].map(x => `<span class="hm-dow">${x}</span>`).join("")}${cells}</div>
     <div class="hm-foot"><span><b style="color:var(--ink)">${total}</b> studied</span>
       <span class="hm-leg">Less ${["var(--line2)","#c7d2fe","#818cf8","#4f46e5","#312e81"].map(c => `<i style="background:${c}"></i>`).join("")} More</span></div>
+    ${Object.keys(S.sample).length ? `<div class="hint" style="font-size:11.5px;color:var(--faint);margin-top:6px">Includes sample activity for the demo</div>` : ""}
   </div>`;
 }
 const howText = () => S.gradeMode === "two"
@@ -1362,17 +1377,21 @@ function openSettings(confirmReset){
         <p class="note" style="margin:0 0 10px">Jump ahead to see cards come back for review. ${S.offset ? `Currently +${Math.round(S.offset/DAY)} day(s).` : ""}</p>
         <button class="btn ghost sm" id="mJump">Jump ahead 1 day</button>
         ${S.offset ? `<button class="btn ghost sm" id="mNow">Back to real time</button>` : ""}</div>
+      <div class="sec"><h4>Sample activity</h4>
+        <p class="note" style="margin:0 0 10px">Made-up study counts that give the Home heatmap some colour for demos. Real activity is counted separately.</p>
+        <button class="btn ghost sm" id="mSample">${Object.keys(S.sample).length ? "Remove sample activity" : "Add sample activity"}</button></div>
       <div class="sec"><h4>Reset</h4>
         <button class="btn ghost sm textred" id="mAsk">Reset all progress…</button></div>
       <div class="actions"><button class="btn sm" id="mClose">Done</button></div>`);
   if (confirmReset){
     $("#mBack").onclick = () => openSettings(false);
-    $("#mReset").onclick = () => { S = Object.assign(fresh(), {decks:S.decks, deck:S.deck, gradeMode:S.gradeMode, meta:S.meta, cart:S.cart}); save(); closeModal(); toast("Progress reset"); };
+    $("#mReset").onclick = () => { S = Object.assign(fresh(), {decks:S.decks, deck:S.deck, gradeMode:S.gradeMode, meta:S.meta, cart:S.cart, sample:S.sample}); save(); closeModal(); toast("Progress reset"); };
   } else {
     $("#mGrade").onchange = e => { S.gradeMode = e.target.value; save(); };
     $("#mLimit").onchange = e => { k.newLimit = +e.target.value; save(); };
     $("#mJump").onclick = () => { S.offset = (S.offset || 0) + DAY; save(); closeModal(); toast("Moved the demo clock ahead 1 day"); };
     $("#mNow") && ($("#mNow").onclick = () => { S.offset = 0; save(); closeModal(); toast("Back to real time"); });
+    $("#mSample").onclick = () => { const on = Object.keys(S.sample).length; S.sample = on ? {} : makeSample(); save(); closeModal(); toast(on ? "Sample activity removed" : "Sample activity added"); };
     $("#mAsk").onclick = () => openSettings(true);
     $("#mClose").onclick = closeModal;
   }
