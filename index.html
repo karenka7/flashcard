@@ -154,6 +154,9 @@ h2{font-size:16px;margin:0 0 14px;font-weight:600;letter-spacing:-.01em}
 .warnbox{background:#fef3c7;color:#92400e;border-radius:10px;padding:10px 12px;margin:8px 0}
 .spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--indigo);border-radius:50%;animation:spin .8s linear infinite;margin:18px auto 4px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.shuf{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink2);margin-top:10px;cursor:pointer}
+.shuf[hidden]{display:none}
+.shuf input{width:16px;height:16px;accent-color:var(--indigo)}
 .imgtag{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--line2);border-radius:99px;padding:2px 8px;flex:none}
 .src{font-size:12.5px;color:var(--muted);margin-top:8px;word-break:break-word}
 
@@ -939,6 +942,8 @@ function fmt(ms){
 }
 const CONF = [{l:"Low", i:"Guessing"},{l:"Medium", i:"Think so"},{l:"High", i:"Know it"}];
 const gotGrade = conf => [1,2,3][conf ?? 1];
+/* Two-step grading can skip the "How sure are you?" step (Settings). Then Got it counts as Good. */
+const askConf = () => S.gradeMode === "two" && S.askConf !== false;
 
 function buckets(d, topic){
   const eod = endOfDay(), b = {learning:[], review:[], fresh:[]};
@@ -1116,7 +1121,9 @@ function heatmap(){
     ${Object.keys(S.sample).length ? `<div class="hint" style="font-size:11.5px;color:var(--faint);margin-top:6px">Includes sample activity for the demo</div>` : ""}
   </div>`;
 }
-const howText = () => S.gradeMode === "two"
+const howText = () => S.gradeMode === "two" && !askConf()
+  ? `Show the answer, then tap <b>Missed it</b> or <b>Got it</b>; each button shows when the card comes back. A new card returns about 10 minutes after you first get it, and moves to tomorrow once you get it again. Shortcuts: <kbd>Space</kbd> to reveal, then <kbd>1</kbd> Missed it or <kbd>2</kbd> Got it.`
+  : S.gradeMode === "two"
   ? `Before the answer, say how sure you are (Low, Medium, High). After it, tap <b>Missed it</b> or <b>Got it</b>; each button shows when the card comes back. A new card returns about 10 minutes after you first get it, and moves to tomorrow once you get it again. Got it with High confidence skips ahead a few days. Shortcuts: <kbd>1</kbd>–<kbd>3</kbd> for confidence, then <kbd>1</kbd> Missed / <kbd>2</kbd> Got it.`
   : `Answer, then rate how well you knew it. Each button shows when you'll see the card again. A new card needs Good twice (about 10 minutes apart) to move to tomorrow; Easy skips ahead a few days. Shortcuts: <kbd>Space</kbd> to reveal, <kbd>1</kbd>–<kbd>4</kbd> to rate.`;
 
@@ -1174,6 +1181,7 @@ function viewToday(){
               <button id="plus" aria-label="More new cards">+</button>
             </div>
             <div class="hint">${k.newSeen} new seen today · reviews are never capped</div>
+            <label class="shuf" title="Study this deck's cards in random order instead of deck order"><input type="checkbox" id="shufToday" ${k.shuffle ? "checked" : ""}> Shuffle cards</label>
           </div>
         </div>
         <div class="split">
@@ -1221,6 +1229,7 @@ function viewToday(){
 
   bindDeckBar();
   $("#startBtn") && ($("#startBtn").onclick = () => startSession());
+  $("#shufToday").onchange = e => { k.shuffle = e.target.checked; save(); toast(k.shuffle ? `Shuffle on for ${d.name}` : `Shuffle off: ${d.name} in deck order`); };
   $("#minus").onclick = () => { k.newLimit = Math.max(0, k.newLimit - 5); save(); viewToday(); };
   $("#plus").onclick = () => { k.newLimit = Math.min(100, k.newLimit + 5); save(); viewToday(); };
   $("#hmPrev").onclick = () => { hmOff = Math.max(-1, hmOff - 1); viewToday(); };
@@ -1359,14 +1368,18 @@ function viewProgress(){
 let Q = [], pend = [], cur = null, revealed = false, picked = new Set(), conf = null, sess = null;
 const study = $("#study"), sBody = $("#sBody"), sFoot = $("#sFoot");
 
+/* Fisher–Yates shuffle, returns a new array */
+const shuffled = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 function startSession(o = {}){
   rollDay();
-  const d = curDeck(); Q = []; pend = [];
-  if (o.flagged){ Q = flaggedIn(d).slice(); }
+  const d = curDeck(), mix = !!dk(d.id).shuffle; Q = []; pend = [];
+  if (o.flagged){ Q = mix ? shuffled(flaggedIn(d)) : flaggedIn(d).slice(); }
   else {
     const b = buckets(d, o.topic);
     const nNew = o.topic ? Math.min(b.fresh.length, Math.max(newLeft(d), 5)) : Math.min(newLeft(d), b.fresh.length);
-    const reviews = b.review, news = b.fresh.slice(0, nNew);
+    // Shuffle on: today's new cards are picked at random from the unseen ones, and reviews come in random order.
+    // Learning cards always come back by their timer.
+    const reviews = mix ? shuffled(b.review) : b.review, news = (mix ? shuffled(b.fresh) : b.fresh).slice(0, nNew);
     pend = b.learning.slice();
     // Interleave: one new card after every two reviews
     let i = 0, j = 0;
@@ -1466,7 +1479,7 @@ function drawCard(){
   </div>`;
 
   const s = prog(c.id);
-  if (!revealed && two){
+  if (!revealed && two && askConf()){
     sFoot.innerHTML = `<div class="foot-in"><div class="foot-q">${c.opts && !picked.size ? "Pick your answer, then: how sure are you?" : "How sure are you?"}</div>
       <div class="conf-row">${CONF.map((x,i) => `<button class="cb" data-c="${i}"><span class="cl">${x.l}</span><span class="ci">${x.i}</span><kbd>${i+1}</kbd></button>`).join("")}</div>
       <button class="foot-skip" id="skipConf">Just show the answer</button></div>`;
@@ -1565,7 +1578,7 @@ document.addEventListener("keydown", e => {
   if (!revealed && cur.opts && /^[a-e]$/i.test(e.key)){
     const btn = sBody.querySelector(`[data-opt="${"abcde".indexOf(e.key.toLowerCase())}"]`); btn && btn.click(); return;
   }
-  if (!revealed && two && ["1","2","3"].includes(e.key)){ conf = +e.key - 1; reveal(); return; }
+  if (!revealed && askConf() && ["1","2","3"].includes(e.key)){ conf = +e.key - 1; reveal(); return; }
   if (revealed && two){
     if (e.key === "1") grade(0);
     else if (e.key === "2") grade(gotGrade(conf));
@@ -1829,7 +1842,11 @@ function openSettings(confirmReset){
           <option value="two" ${S.gradeMode === "two" ? "selected" : ""}>Two-step: confidence, then Missed it / Got it</option>
           <option value="four" ${S.gradeMode === "four" ? "selected" : ""}>Four buttons: Again / Hard / Good / Easy</option>
         </select>
+        <label class="shuf" id="mConfWrap" ${S.gradeMode === "two" ? "" : "hidden"}><input type="checkbox" id="mConf" ${S.askConf !== false ? "checked" : ""}> Ask how sure I am before showing the answer</label>
         <p class="note" style="margin:8px 0 0">Two-step maps Got it + Low/Medium/High confidence to Hard/Good/Easy, so the schedule is the same either way.</p></div>
+      <div class="sec"><h4>Card order · ${esc(d.name)}</h4>
+        <label class="shuf"><input type="checkbox" id="mShuf" ${k.shuffle ? "checked" : ""}> Shuffle cards</label>
+        <p class="note" style="margin:6px 0 0">On: new cards are picked at random and reviews come in random order. Off: deck order.</p></div>
       <div class="sec"><h4>New cards per day · ${esc(d.name)}</h4>
         <select id="mLimit">${[0,5,10,15,20,25,30,40,50,75,100].map(n => `<option ${n === k.newLimit ? "selected" : ""}>${n}</option>`).join("")}</select></div>
       <div class="sec"><h4>AI card maker</h4>
@@ -1849,9 +1866,10 @@ function openSettings(confirmReset){
       <div class="actions"><button class="btn sm" id="mClose">Done</button></div>`);
   if (confirmReset){
     $("#mBack").onclick = () => openSettings(false);
-    $("#mReset").onclick = () => { S = Object.assign(fresh(), {decks:S.decks, extra:S.extra || {}, deck:S.deck, gradeMode:S.gradeMode, meta:S.meta, cart:S.cart, sample:S.sample}); save(); closeModal(); toast("Progress reset"); };
+    $("#mReset").onclick = () => { S = Object.assign(fresh(), {decks:S.decks, extra:S.extra || {}, deck:S.deck, gradeMode:S.gradeMode, askConf:S.askConf, meta:S.meta, cart:S.cart, sample:S.sample}); save(); closeModal(); toast("Progress reset"); };
   } else {
-    $("#mGrade").onchange = e => { S.gradeMode = e.target.value; save(); };
+    $("#mGrade").onchange = e => { S.gradeMode = e.target.value; save(); $("#mConfWrap").hidden = S.gradeMode !== "two"; };
+    $("#mConf").onchange = e => { S.askConf = e.target.checked; save(); };
     $("#mAiModel").onchange = e => { aiSaveCfg({...aiCfg(), model:e.target.value}); toast("AI model saved"); };
     $("#mAiSave").onclick = () => { const k = $("#mAiKey").value.trim();
       if (!k){ toast("Paste your API key first"); return; }
@@ -1859,6 +1877,7 @@ function openSettings(confirmReset){
       aiSaveCfg({...aiCfg(), key:k, model:$("#mAiModel").value}); toast("API key saved in this browser"); openSettings(); };
     const aiDel = $("#mAiDel"); if (aiDel) aiDel.onclick = () => { const c = aiCfg(); delete c.key; aiSaveCfg(c); toast("API key removed"); openSettings(); };
     $("#mLimit").onchange = e => { k.newLimit = +e.target.value; save(); };
+    $("#mShuf").onchange = e => { k.shuffle = e.target.checked; save(); };
     $("#mJump").onclick = () => { S.offset = (S.offset || 0) + DAY; save(); closeModal(); toast("Moved the demo clock ahead 1 day"); };
     $("#mNow") && ($("#mNow").onclick = () => { S.offset = 0; save(); closeModal(); toast("Back to real time"); });
     $("#mSample").onclick = () => { const on = Object.keys(S.sample).length; S.sample = on ? {} : makeSample(); save(); closeModal(); toast(on ? "Sample activity removed" : "Sample activity added"); };
