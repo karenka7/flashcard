@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flick · NCLEX-RN demo</title>
 <meta name="description" content="Flick flashcards prototype: an NCLEX-RN demo deck plus your own decks, with spaced repetition and two-step grading.">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADT0lEQVR4AcSXXUgUURTH/2d018zISg1zfQhftCwllAp7SXIryNYigqKXIOiDEH0o6EUlSygSUqOiCKIPtBIhTZQ0TEKKElFYSlIiIldJTfNbt3Vu5+6quLA7o6brcM/MvffMOb//njPMsAo8HJZkW/TBlM5Mi9lWYjF3fEvbaxMLMRlrMduKLebODJnTAwpuAhIShCHNbMsmf2FVFHGTCMeIKMpT4Fz2ZCwRjhOJApnTYu7IAoQbc2YhFZpCbI0gXAaRYS6Aed3DOYkol3/ge8majnUKOLpZGGEQLwgUP+1YsivRDmY9dzIZ4hRgN3XmMjyO1z4ZzIqXTAlT+OFKAuGiXPjUmJm6ryNeEaDTDHZWgq++HIqfinMKhLrRl9TZLAHEKNyPZRMg2YogET5bldZ8W2IAMi6swdUboTOWlx+KawVhuF4UBjmXvkvZ67A/NQj+/lrZ+I3AbFmBAO3bXN7dKSuRkxeCZPNKbIkzzljsViNiNhkQHW2AnEvfzl0rcDY9GOcz17iCvZy5AgG6D19UbCAOnAzF4RPBXtJ4396eFOjdOeXRFLAq2A+Je1YjaLUfDAt4NwYF0RTG+0VTwNr1C6B6Z3n0aAqYGFM9Bi3mpqaAkcHJxWR5zKUrQCxxETQFSMnDS1wFXQEjA642jE9IOfOz7l+uWK0oXQGDfQ5n/I9OfnM7Z3M/NdSP6d6sK+B7qytJV4/A208qrO1C29oEqqvGcKfwD4ofD/6/gIFeB1obR+DgQkgR1jYVLZ8n8a5hApWvRlHyaAj3C/uRn9ODnIwuZKV34R6va6pGnTF6CnQrIBNYPwyj4kE36sr6UfmwF2V3u1H7rA8fXw/gS+MwfraPY+C3A6p+y2U6N1O4s1/ddrwsHHaBXpsdo0MLoHjJKdn8NUQLlungL0ULt4CWTQBALYrdrj6FwDB8fTBz0mF8olTXR3aogrJ8zZfMyrpQG7cAWLF2wy0W0MTmkyEEmqeYrv+GpaU0SaAzTF+8R5yTeR7Czi0/JZnS76yAnLysiWgqr4kwCiGyIcRfubeoJnMK5JTXmAIr3piap3PPCHBtkFpRG3llXBHhQqUjXKrbrLbV5ZvfmWMF/xArxxepKg7JnOW1plyA3D7w/wAAAP//KXKA3gAAAAZJREFUAwD1e14v0JdHyQAAAABJRU5ErkJggg==">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><rect width='28' height='28' rx='8' fill='%234f46e5'/><rect x='7' y='9' width='12' height='10' rx='2.5' fill='%23a5b4fc' transform='rotate(-8 13 14)'/><rect x='9' y='8' width='12' height='10' rx='2.5' fill='%23fff'/></svg>">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAK9UlEQVR4AeyceWwc1R3HZxw7tvfw2dioaWnrlkYgKlS15QhIqKKmjdpACbR2aaABekhARKO0UqMKRaJ/FVU9QJAQUhqgUCrjEBIRQ+zYJIAdgm3iEGwnzuFgHMe73vvyznpn+WlXQpDM7OXZeb/35mc9jew53u/3vt/PvGttl9168zQVUkBTgTKJvkgBHQUIDh1h6LQkERxEga4CBIeuNHSB4CAGdBUgOHSloQsERxEMWOURgsMqThfRToKjCNGs8gjBYRWni2gnwVGEaFZ5hOCwitNFtJPgKEI0qzxCcFjF6SLaaSgcRcSnRxArQHAgNod1agQHawcQxyc4EJvDOjWCg7UDiOMTHIjNYZ0awcHaAcTxCQ7W5iCOT3AgNod1agQHawcQxyc4EJvDOjWCg7UDiOMTHIjNYZ0awcHaAcTxCQ7E5rBODS8crJWh+PS3ssSAvgLUc+hrY/krBIflEdAXgODQ18byVwgOyyOgLwDBoa+N5a8QHEIhYGxjCA5j9RSqNoJDKDuNbQzBYayeQtVGcAhlp7GNITiM1VOo2ggOoew0tjEEh7F6ClWbReAQyjPTGkNwmCY1f4EIDv48My1jgsM0qfkLRHDw55lpGRMcpknNXyAB4Vj+5fJrVla1/si2ps3RfpcTQ/npzxw33Wz73jVVTc1LOGJEHDhA97ZfOh/b1vTE9qZNmxse2FB397017WudGMq6X9es31j350catj3X/Ohjy2693VFbi195IX773O6Q7/1dzZP/bv7F3c5Lv1KO/NX85oqKe35bs3VH8x3tjqVLUSfLAb9Z9ANx4S18asclt6xxlFdkuRHdpWqbvPaemi3/ueT7rTZZRpdeJiG+4VjT5lz3mxqHE6u6GY31j41fKLv/odqbfmjTv4XlFV7hgDcPhnCYT6B97fJ0taJCfnBD3QO/ry3DZwW+jPITddVqO0z+87uXg7taV9mvvb4KW6JcwnHd9VVr1zmxSbnIfB76Y/3XWnDNpvmDw2aTH9xYV1bG6zxDj6HKSnn9xnq9q0zO8waHLN1xZ43dzjTtkhnV8o0K2L4rWfUFV8yByvVNFZddZVv547pVdzX+fH3zqluQzu0L1l7rgdvbEA2XeOGoqJQv/6599X3LWtsbvn2j80tfr3TWlzfWSdWVog0on4XkshXl9Q1YTMGSx2cFgu+vuNqx+r6mb610VH9+BPnqF5EmDDkbUmRZvvo6LMsWdFrbnGU/aGu48lp7udbMvb5W5G4jg9eKy7FsquOCA8hobW9saNbdCbdXZwQU+djUrPVasGgxIjhgknHjbfWV1bopyTJMOFIsVDI1Jny8bGo8/WC6Tug/UqorN/ykzlmX7aWxVUnibW9crCZ84FKGwxYjs7i4nfmfabmyetnyHGOtcPte2vIsWSKrqvYlk8+igGNplXzVDQ6TW07hciqAAo4V37FXLEWRSU69LHUDCktarqi2lOi8NJY9HMtbKrOsUHjRUcg82cPRfGmOeaiQunPRKPZw1DZmW75yIaKoSbKHw9lgaTgwg8UeDlqnoOWDPRzJpPg74mjtz54YezjUBMGR3SNmV9nDkVBw7BUzswBvYPZwRIIEB1I+2MMR9i8g1cbyabGHIxRIWt4FpAKwhyOsDQdSvSyVFgI4/NRzIEUOAxw05yA4dBRIpaRIkDoPHXWYnmbfc0DzQzSygAr4Cgo4IjQnxUcGZIQCDlqwgBMICw44aB/MGDQMrgUJHDQhNdhXQ6pDAUcoQKtZQ9w0uBIUcKhJKRqmj98Mtnbx1aGAA5pBH7+BCNgKGjhoNYsNDQnNv7cOERwEh54CEVrN6knD7jyaYcVfygkpO325jowFjqAvwbWOQiaPBQ5YzcYiOTqPhDW2yiIRLL+OjwUOePPCubbCFEVKqliEg4RLVPxeLC8BKjhyiAJgJBJyiSzBU63Pl6MHNS1VTHDkMSf1BcXvOU6MKabZnz0QKjhyf8IydV58OA71x7J7ZtpVTHDksQ82PZuCL9PUMT+Q15M8MY5j4Sah2SEFG0J57IPF4tJHM3CvsOXNHizdBkiMqOdYUFLxWO652JFxVU2JObgE/MmOl0LgCpKCCA5QJJzHyBKJSaen4F4By4vPhWJRRNzzBwdAMTyqevyIRISUFl8O9kX37Y0uvh4Da0AGRx7TDmj8QlLqO6z6Q+LwcWwk/s9H/dhGS1xwBDy5V7MABxQlIfUMqG6fCHwc6I0+8rAXyb+0Bm0/LbjgcE8XsIoDPvYPqBNnc89hP20ttm+gq3jh2dA//upX4hgpxwUHrFbChfz1G2yov3cslR5izPPdqEgjw/E/rHd3vIhoeXJB03DBAclNnZyHY0Flxp3aezDZf0Sd9WB8/y5uy9Dh+OY/eTZv8pyaKKCnvLieUp9BB8fJo9Hi9kAnp1P7D6md3cmhD9XjZ1LwI0Dj8kpsy7nz6thoAmjo647u3hl+/O/+O2+b+cvDnpH346W2dvH1o4MjFlanJooXLq5IxydTQ6MqdCQw3PQMJBmWJ54M3f+r85s2uIGGf/3N/8xTwf1vRKOYdjKyA4QODkj3g/7wAs//f1KZT40PRnZvd4+8hXc+ATrnLBjhiASTw29yJms4kDx3Jj7SH+7t8O3a5jraH56PcryMynCDEQ7IbHIsNjVR8MwUHix1URekoHdh5owycSQ6fCB0cLdv77NzHY/PwvHtPf7jg5G5GSy/jbF4KZDCAQ07vC/g+pil0MlECjblpk/Fx4cjg73BA6/4Xtsx9/KW2df/63lrj+/9g6GTI9Hzkwr0GbBdAQmLVwyEw2BxkknpwC7fx4WvbIvIY0FJ+d2JqYn42GDkvZ5gX6d3zzPuzi2uN17wvPOa/+jb4dPHYrNTCox3Eh+L5SI00HgELxyQbEqV+vcGBroC8HbCj4YUmC16ZxMfnZgfPRx+tzu4v8P36tPunVtd+/7nHejyw1z4zGgMNmph0WRIOK4rQQ1HRtmpifmu5+dggJ/P47c9Mo9kjnD/3Dnl7Nj8sUORQ68Hev7v3bXNBQW+gR/h5NmxmGdGgW3ZzP10vEABDuCAjKELgQF+z3Z390veob7Q5Ph8yPe5j+jgRXdPK6dHY0ffCQ90BaAb2LnFtftpd+/Lvne7A9BJQFcBHQZ0G1AblTwV4AOOTGNg3udzJU59EIW5atfznle2uno7fTAuAAcwRejr9A32BMeHItDTwASC652STHuZH3mC4wKxEkpqblqBcYE4uEAZo37kGA6jJKB69BQgOPSUMec86igEB2p72CZHcLDVH3V0ggO1PWyTIzjY6o86OsGB2h62yREcbPVHHZ3gQG0P2+SwwsFWFYqeVoDgSMtABy0FCA4tVehcWgGCIy0DHbQUIDi0VKFzaQUIjrQMdNBSgODQUoXOpRUgONIyiHEwuhUEh9GKClQfwSGQmUY3heAwWlGB6iM4BDLT6KYQHEYrKlB9BIdAZhrdFILDaEUFqs8ScAjkl6lNIThMlZuvYAQHX36Zmi3BYarcfAUjOPjyy9RsCQ5T5eYrGMHBl1+mZktwmCo3R8EgVYIDRKCirQDBoa0LnQUFCA4QgYq2AgSHti50FhQgOEAEKtoKEBzautBZUIDgABGoaCtAcGjron/WQlcIDguZXWhTCY5CFbPQ/QSHhcwutKkER6GKWeh+gsNCZhfaVIKjUMUsdD/BYSGzC22qcXAUGpnuR68AwYHeInYJEhzstEcfmeBAbxG7BAkOdtqjj0xwoLeIXYKfAAAA//9mV1KlAAAABklEQVQDANH/FHzhD2s9AAAAAElFTkSuQmCC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -781,15 +784,17 @@ const TREBLE_CLEF = `<path d='M96 252 C84 256 74 248 78 238 C82 228 98 230 98 24
  C110 172 102 182 92 180'
  fill='none' stroke='#0f172a' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/>
  <circle cx='80' cy='242' r='7' fill='#0f172a'/>`;
-function staffSvg(step){ // step 0 = E4, the bottom line; each step is one line or space
-  const y = 190 - step*10, x = 290, ln = (x1, x2, y1, y2, w = 2) => `<line x1='${x1}' x2='${x2}' y1='${y1}' y2='${y2}' stroke='#0f172a' stroke-width='${w}'/>`;
+function staffSvg(steps){ // step 0 = E4, the bottom line; each step is one line or space. An array draws a chord on one stem.
+  steps = [].concat(steps);
+  const lo = Math.min(...steps), hi = Math.max(...steps), x = 290, yOf = st => 190 - st*10, ln = (x1, x2, y1, y2, w = 2) => `<line x1='${x1}' x2='${x2}' y1='${y1}' y2='${y2}' stroke='#0f172a' stroke-width='${w}'/>`;
   let s = "";
   for (let i = 0; i < 5; i++) s += ln(40, 440, 110 + i*20, 110 + i*20);
   s += ln(40, 40, 110, 190) + ln(440, 440, 110, 190);
-  for (let ly = 210; ly <= y; ly += 20) s += ln(x-22, x+22, ly, ly);   // ledger lines below
-  for (let ly = 90; ly >= y; ly -= 20) s += ln(x-22, x+22, ly, ly);    // ledger lines above
-  s += TREBLE_CLEF + `<ellipse cx='${x}' cy='${y}' rx='12.5' ry='9' transform='rotate(-20 ${x} ${y})' fill='#0f172a'/>`;
-  s += step < 4 ? ln(x+11, x+11, y-3, y-70, 2.5) : ln(x-11, x-11, y+3, y+70, 2.5);   // stem up below the middle line, down from it
+  for (let ly = 210; ly <= yOf(lo); ly += 20) s += ln(x-22, x+22, ly, ly);   // ledger lines below
+  for (let ly = 90; ly >= yOf(hi); ly -= 20) s += ln(x-22, x+22, ly, ly);    // ledger lines above
+  s += TREBLE_CLEF + steps.map(st => `<ellipse cx='${x}' cy='${yOf(st)}' rx='12.5' ry='9' transform='rotate(-20 ${x} ${yOf(st)})' fill='#0f172a'/>`).join("");
+  // stem up when the notes sit mostly below the middle line (B4, step 4), down otherwise; it spans the whole chord
+  s += (lo + hi) / 2 < 4 ? ln(x+11, x+11, yOf(lo)-3, yOf(hi)-70, 2.5) : ln(x-11, x-11, yOf(hi)+3, yOf(lo)+70, 2.5);
   return svgUri(s);
 }
 const NOTE_INFO = {
@@ -811,8 +816,18 @@ const MUSIC_CARDS = ["G4","C4","E5","A4","F4","D5","B4","G5","E4","C5","A5","D4"
   id:"mu" + n, imgQ:staffSvg(NOTE_INFO[n][0]), q:"Name this note.",
   a:n[0], sndA:"tone:" + n, why:NOTE_INFO[n][1] + ` (${n})`
 }));
+/* Two-note chords: hear both notes together, see them stacked on the staff, name them. */
+const NOTE_PLACE = {C4:"on the ledger line below the staff", D4:"just below the bottom line", E4:"on the bottom line", F4:"in the first space",
+  G4:"on the second line", A4:"in the second space", B4:"on the middle line", C5:"in the third space", D5:"on the fourth line"};
+const CHORDS = [["C4","E4","a major third"],["E4","G4","a minor third"],["C4","G4","a perfect fifth"],["F4","A4","a major third"],["D4","F4","a minor third"],
+  ["G4","D5","a perfect fifth"],["A4","C5","a minor third"],["E4","C5","a minor sixth"],["G4","B4","a major third"],["D4","A4","a perfect fifth"]];
+CHORDS.forEach(([lo, hi, iv]) => MUSIC_CARDS.push({
+  id:"mc" + lo + hi, imgQ:staffSvg([NOTE_INFO[lo][0], NOTE_INFO[hi][0]]), sndQ:`tone:${lo}+${hi}`,
+  q:"Play the chord. Which two notes are in it?", a:`${lo[0]} and ${hi[0]}`,
+  why:`${lo[0]} is ${NOTE_PLACE[lo]} and ${hi[0]} is ${NOTE_PLACE[hi]}. Together they make ${iv}. (${lo} + ${hi})`
+}));
 const MUSIC = {id:"music", name:"Music Notes", builtin:true, color:"#ca8a04", cards:MUSIC_CARDS,
-  sub:"Demo deck of 13 treble-clef notes, middle C to A5, with the sound of each on the back"};
+  sub:"Demo deck: 13 treble-clef notes (middle C to A5) with their sounds, and 10 two-note chords to hear and name"};
 const PALETTE = ["#0891b2","#db2777","#16a34a","#ea580c","#7c3aed","#ca8a04","#475569","#0d9488"];
 
 /* =========================================================
@@ -1051,21 +1066,21 @@ async function loadSounds(){
 /* Built-in note sounds: a short piano-like tone (a few harmonics that fade),
    made once per note as a WAV and cached as an object URL. */
 const NOTE_HZ = {C:261.63, D:293.66, E:329.63, F:349.23, G:392.00, A:440.00, B:493.88};
-function toneUrl(note){
-  const hz = NOTE_HZ[note[0]] * Math.pow(2, +note.slice(1) - 4), rate = 22050, len = Math.round(rate * 1.6);
+function toneUrl(notes){ // "C4" or a chord such as "C4+E4"
+  const hzs = notes.split("+").map(n => NOTE_HZ[n[0]] * Math.pow(2, +n.slice(1) - 4)), rate = 22050, len = Math.round(rate * 1.6), mix = 1 / hzs.length;
   const amps = [1, .45, .25, .12, .06, .03], buf = new ArrayBuffer(44 + len*2), v = new DataView(buf);
   const str = (o, t) => [...t].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
   str(0,"RIFF"); v.setUint32(4, 36 + len*2, true); str(8,"WAVEfmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
   v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); str(36,"data"); v.setUint32(40,len*2,true);
   for (let i = 0; i < len; i++){
     const t = i / rate, att = Math.min(1, t / .006), rel = Math.min(1, (len - i) / (rate * .05));
-    let x = 0; amps.forEach((a, k) => { x += a * Math.exp(-t * (2.2 + k*1.3)) * Math.sin(2*Math.PI*hz*(k+1)*t); });
+    let x = 0; hzs.forEach(hz => amps.forEach((a, k) => { x += a * Math.exp(-t * (2.2 + k*1.3)) * Math.sin(2*Math.PI*hz*(k+1)*t); })); x *= mix;
     v.setInt16(44 + i*2, Math.max(-1, Math.min(1, x * .45 * att * rel)) * 32767, true);
   }
   return URL.createObjectURL(new Blob([buf], {type:"audio/wav"}));
 }
 function sndUrl(key){
-  if (!sndUrls.has(key) && /^tone:[A-G][0-8]$/.test(key)) sndUrls.set(key, toneUrl(key.slice(5)));
+  if (!sndUrls.has(key) && /^tone:[A-G][0-8](\+[A-G][0-8])*$/.test(key)) sndUrls.set(key, toneUrl(key.slice(5)));
   return sndUrls.get(key);
 }
 const cardSnd = (key, label) => key
