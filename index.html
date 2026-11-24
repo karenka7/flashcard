@@ -129,6 +129,14 @@ h2{font-size:16px;margin:0 0 14px;font-weight:600;letter-spacing:-.01em}
 .imgf{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
 .imgf img{width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
 .imgf .upl{cursor:pointer}
+.sndf{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.sndf audio{height:36px;max-width:260px}
+.sndf .upl{cursor:pointer}
+.rec-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#dc2626;margin-right:6px;animation:recp 1s infinite}
+@keyframes recp{50%{opacity:.25}}
+.c-snd{display:block;width:100%;max-width:360px;height:40px;margin-top:14px}
+.a + .c-snd{margin:-4px 0 16px}
+.row-body .c-snd{margin:0 0 10px}
 .imgtag{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--line2);border-radius:99px;padding:2px 8px;flex:none}
 .src{font-size:12.5px;color:var(--muted);margin-top:8px;word-break:break-word}
 
@@ -927,6 +935,58 @@ const DEFAULT_INSTR = "Browse the deck, check answers and see when each card is 
 const deckDesc = d => (S.meta[d.id] && S.meta[d.id].desc) || deckSub(d);
 const deckInstr = d => (S.meta[d.id] && S.meta[d.id].instr) || DEFAULT_INSTR;
 const cardImg = (src, alt) => src ? `<img class="c-img" src="${esc(src)}" alt="${alt}">` : "";
+
+/* =========================================================
+   SOUNDS — audio on the front (sndQ) or back (sndA) of a card.
+   Audio is too big for localStorage, so the card only stores a
+   key; the audio itself lives in IndexedDB ("flick-media"). In
+   the real app this becomes a file in S3 / Supabase Storage and
+   the key becomes its path.
+   ========================================================= */
+const SND_MAX = 3 * 1024 * 1024, REC_MAX_S = 60;
+const sndUrls = new Map();   // key -> object URL, filled at start-up
+let mediaDb = null;
+function openMedia(){
+  return new Promise((ok, fail) => {
+    if (!window.indexedDB) return fail(new Error("no indexedDB"));
+    const r = indexedDB.open("flick-media", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("sounds");
+    r.onsuccess = () => ok(r.result); r.onerror = () => fail(r.error);
+  });
+}
+function mediaTx(mode, fn){
+  return new Promise((ok, fail) => {
+    if (!mediaDb) return fail(new Error("media storage unavailable"));
+    const tx = mediaDb.transaction("sounds", mode), st = tx.objectStore("sounds"), out = fn(st);
+    tx.oncomplete = () => ok(out && out.result); tx.onerror = tx.onabort = () => fail(tx.error);
+  });
+}
+async function putSound(blob){
+  const key = uid("snd");
+  await mediaTx("readwrite", st => st.put(blob, key));
+  sndUrls.set(key, URL.createObjectURL(blob));
+  return key;
+}
+function dropSounds(keys){
+  keys = keys.filter(Boolean); if (!keys.length || !mediaDb) return;
+  keys.forEach(k => { const u = sndUrls.get(k); if (u) URL.revokeObjectURL(u); sndUrls.delete(k); });
+  mediaTx("readwrite", st => keys.forEach(k => st.delete(k))).catch(() => {});
+}
+async function loadSounds(){
+  try {
+    mediaDb = await openMedia();
+    await new Promise((ok, fail) => {
+      const r = mediaDb.transaction("sounds").objectStore("sounds").openCursor();
+      r.onsuccess = () => { const c = r.result; if (!c) return ok(); sndUrls.set(c.key, URL.createObjectURL(c.value)); c.continue(); };
+      r.onerror = () => fail(r.error);
+    });
+  } catch(e){ mediaDb = mediaDb || null; }
+}
+const cardSnd = (key, label) => key
+  ? (sndUrls.has(key) ? `<audio class="c-snd" controls preload="metadata" src="${sndUrls.get(key)}" aria-label="${label}"></audio>`
+                      : `<div class="note c-snd">(Sound not available in this browser)</div>`)
+  : "";
+const cardSoundKeys = c => [c.sndQ, c.sndA];
 const srcHtml = s => /^https?:\/\/\S+$/.test(s) ? `<a href="${esc(s)}" target="_blank" rel="noopener noreferrer">${esc(s)}</a>` : esc(s);
 
 /* Heatmap: one calendar month of S.hist; hmOff is -1, 0 or +1 months from the current month */
@@ -1116,14 +1176,15 @@ function drawList(){
     const st = statusOf(c), open = filt.open === c.id, t = topicOf(c, d);
     return `<div class="row" data-row="${c.id}">
       <div class="row-top"><span class="dot" style="background:${t.color}"></span>
-        <div class="rq">${esc(c.q) || "(image only)"}</div>
+        <div class="rq">${esc(c.q) || (c.imgQ ? "(image only)" : "(sound only)")}</div>
         ${c.imgQ || c.imgA ? `<span class="imgtag">Image</span>` : ""}
+        ${c.sndQ || c.sndA ? `<span class="imgtag">Sound</span>` : ""}
         ${S.flags[c.id] ? `<span class="flagmark">⚑</span>` : ""}
         <span class="status ${st.cls}">${st.txt}</span></div>
       ${open ? `<div class="row-body" data-stop>
-        ${cardImg(c.imgQ, "Front image")}
+        ${cardImg(c.imgQ, "Front image")}${cardSnd(c.sndQ, "Front sound")}
         ${c.opts ? `<ol type="A">${c.opts.map((o,i) => `<li class="${c.ans.includes(i) ? "ok" : ""}">${esc(o)}${c.ans.includes(i) ? " ✓" : ""}</li>`).join("")}</ol>` : ""}
-        <div class="ans">${esc(c.a)}</div>${cardImg(c.imgA, "Back image")}${c.why ? `<div class="why">${esc(c.why)}</div>` : ""}
+        <div class="ans">${esc(c.a)}</div>${cardImg(c.imgA, "Back image")}${cardSnd(c.sndA, "Back sound")}${c.why ? `<div class="why">${esc(c.why)}</div>` : ""}
         ${c.src ? `<div class="src">Source: ${srcHtml(c.src)}</div>` : ""}
         <div class="btn-row">
           <button class="btn ghost sm" data-flagrow="${c.id}">${S.flags[c.id] ? "Remove flag" : "⚑ Flag"}</button>
@@ -1293,9 +1354,11 @@ function drawCard(){
     </div>
     <div class="q">${esc(c.q)}</div>
     ${cardImg(c.imgQ, "Image for this question")}
+    ${cardSnd(c.sndQ, "Sound for this question")}
     ${opts}
     ${revealed ? `<div class="answer">${verdict ? `<div>${verdict}</div>` : ""}
       <div class="a-lbl">Answer</div><div class="a">${esc(c.a)}</div>${cardImg(c.imgA, "Image for this answer")}
+      ${cardSnd(c.sndA, "Sound for this answer")}
       ${c.why ? `<div class="why"><b>Why: </b>${esc(c.why)}</div>` : ""}
       ${c.src ? `<div class="src">Source: ${srcHtml(c.src)}</div>` : ""}</div>` : ""}
   </div>`;
@@ -1394,6 +1457,9 @@ document.addEventListener("keydown", e => {
   const two = S.gradeMode === "two";
   if (e.key === " " || e.key === "Enter"){ e.preventDefault(); reveal(); return; }
   if (e.key === "f" || e.key === "F"){ toggleFlag(); return; }
+  if (e.key === "p" || e.key === "P"){
+    const a = [...sBody.querySelectorAll("audio")].pop(); if (a){ if (a.paused){ a.currentTime = 0; a.play(); } else a.pause(); } return;
+  }
   if (!revealed && cur.opts && /^[a-e]$/i.test(e.key)){
     const btn = sBody.querySelector(`[data-opt="${"abcde".indexOf(e.key.toLowerCase())}"]`); btn && btn.click(); return;
   }
@@ -1418,7 +1484,7 @@ function showModal(html){
   m.onkeydown = null;
   return m;
 }
-function closeModal(){ $("#modal").hidden = true; route(); }
+function closeModal(){ stopRec(); $("#modal").hidden = true; route(); }
 
 function openNewDeck(){
   showModal(`<h3>New deck</h3>
@@ -1444,6 +1510,61 @@ function openNewDeck(){
 
 /* Images picked in the card form, as data URIs, until the card is saved */
 let draft = {q:null, a:null};
+/* Sounds picked or recorded in the card form: a stored key (kept), a Blob (new), or null */
+let draftSnd = {q:null, a:null}, rec = null;
+function stopRec(){ if (rec && rec.mr.state !== "inactive") rec.mr.stop(); }
+function drawSndFields(){
+  $("#modal").querySelectorAll("[data-sndf]").forEach(el => {
+    const side = el.dataset.sndf, v = draftSnd[side], where = side === "q" ? "front" : "back";
+    const url = v instanceof Blob ? (v._url ||= URL.createObjectURL(v)) : v ? sndUrls.get(v) : null;
+    const recording = rec && rec.side === side;
+    el.innerHTML = recording
+      ? `<span><span class="rec-dot"></span>Recording… <b data-t>0:00</b></span><button class="btn sm" type="button" data-stoprec>Stop</button>`
+      : (url ? `<audio controls preload="metadata" src="${url}"></audio>` : "")
+        + `<label class="btn ghost sm upl">${v ? "Replace sound" : "Upload sound"}<input type="file" accept="audio/*" hidden></label>`
+        + (navigator.mediaDevices && window.MediaRecorder && !rec ? `<button class="btn ghost sm" type="button" data-rec>● Record</button>` : "")
+        + (v ? `<button class="btn ghost sm textred" type="button" data-rm>Remove</button>` : `<span class="note">Optional sound for the ${where}</span>`);
+    if (recording){
+      el.querySelector("[data-stoprec]").onclick = stopRec;
+      const t = el.querySelector("[data-t]"), tick = () => { if (!rec || rec.side !== side) return;
+        const sec = Math.floor((Date.now() - rec.t0) / 1000); t.textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}`;
+        if (sec >= REC_MAX_S) stopRec(); else setTimeout(tick, 250); };
+      tick(); return;
+    }
+    el.querySelector("input").onchange = e => {
+      const f = e.target.files[0]; if (!f) return;
+      if (!f.type.startsWith("audio/")){ toast("That isn't an audio file. Try MP3, M4A, WAV or OGG."); return; }
+      if (f.size > SND_MAX){ toast(`That sound is ${(f.size/1048576).toFixed(1)} MB. Keep sounds under ${SND_MAX/1048576} MB.`); return; }
+      draftSnd[side] = f; drawSndFields();
+    };
+    const rb = el.querySelector("[data-rec]"); if (rb) rb.onclick = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio:true}), mr = new MediaRecorder(stream), chunks = [];
+        rec = {side, mr, t0:Date.now()};
+        mr.ondataavailable = e => e.data.size && chunks.push(e.data);
+        mr.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          const b = new Blob(chunks, {type: mr.mimeType || "audio/webm"}); rec = null;
+          if (b.size){ draftSnd[side] = b; } drawSndFields();
+        };
+        mr.start(); drawSndFields();
+      } catch(err){ rec = null; toast("Couldn't use the microphone. Check that this site is allowed to use it."); drawSndFields(); }
+    };
+    const rm = el.querySelector("[data-rm]"); if (rm) rm.onclick = () => { draftSnd[side] = null; drawSndFields(); };
+  });
+}
+/* Store new sounds from the form. Returns {sndQ, sndA, added:[keys]} or throws. */
+async function commitSounds(){
+  if (rec) throw new Error("Stop the recording first");
+  const out = {added:[]};
+  for (const side of ["q","a"]){
+    const v = draftSnd[side], f = side === "q" ? "sndQ" : "sndA";
+    if (v instanceof Blob){ const k = await putSound(v); out[f] = k; out.added.push(k); }
+    else out[f] = v || null;
+  }
+  return out;
+}
+const SOUND_FAIL = "Couldn't save the sound in this browser (storage may be full or blocked). The card wasn't saved.";
 /* Uploaded photos are shrunk to at most 1000px and saved as JPEG so they fit in browser storage */
 function shrinkImage(file){
   return new Promise((ok, fail) => {
@@ -1475,10 +1596,13 @@ function drawImgFields(){
 const STORAGE_FULL = "This browser's storage is full, so the card wasn't saved. Try a smaller image or remove some images.";
 function cardFields(c = {}){
   draft = {q:c.imgQ || null, a:c.imgA || null};
+  stopRec(); draftSnd = {q:c.sndQ || null, a:c.sndA || null};
   return `<label class="fl">Front <span>(question)</span><textarea id="cQ" rows="2">${esc(c.q)}</textarea></label>
     <div class="imgf" data-imgf="q"></div>
+    <div class="sndf" data-sndf="q"></div>
     <label class="fl">Back <span>(answer)</span><textarea id="cA" rows="2">${esc(c.a)}</textarea></label>
     <div class="imgf" data-imgf="a"></div>
+    <div class="sndf" data-sndf="a"></div>
     <label class="fl">Explanation <span>(optional, shown under the answer)</span><textarea id="cW" rows="2">${esc(c.why)}</textarea></label>
     <label class="fl">Source <span>(optional: a textbook, page, lecture or link)</span><input id="cS" maxlength="300" value="${esc(c.src)}" placeholder="e.g. Lewis Med-Surg, ch. 34"></label>`;
 }
@@ -1493,14 +1617,16 @@ function openAddCards(mode = "one"){
   $("#modal").querySelectorAll("[data-m]").forEach(b => b.onclick = () => openAddCards(b.dataset.m));
   $("#mDone").onclick = closeModal;
   if (mode === "one"){
-    $("#cQ").focus(); drawImgFields();
-    const add = () => {
+    $("#cQ").focus(); drawImgFields(); drawSndFields();
+    const add = async () => {
       const q = $("#cQ").value.trim(), a = $("#cA").value.trim(), why = $("#cW").value.trim();
-      const hasQ = q || draft.q, hasA = a || draft.a;
-      if (!hasQ || !hasA){ toast("A card needs a front and a back (text or an image)"); (hasQ ? $("#cA") : $("#cQ")).focus(); return; }
+      const hasQ = q || draft.q || draftSnd.q, hasA = a || draft.a || draftSnd.a;
+      if (!hasQ || !hasA){ toast("A card needs a front and a back (text, an image or a sound)"); (hasQ ? $("#cA") : $("#cQ")).focus(); return; }
       const src = $("#cS").value.trim();
-      d.cards.push({id:uid("u"), q, a, why, ...(src ? {src} : {}), ...(draft.q ? {imgQ:draft.q} : {}), ...(draft.a ? {imgA:draft.a} : {})});
-      if (!save()){ d.cards.pop(); toast(STORAGE_FULL); return; }
+      let snd; try { snd = await commitSounds(); } catch(err){ toast(rec ? "Stop the recording first" : SOUND_FAIL); return; }
+      d.cards.push({id:uid("u"), q, a, why, ...(src ? {src} : {}), ...(draft.q ? {imgQ:draft.q} : {}), ...(draft.a ? {imgA:draft.a} : {}),
+        ...(snd.sndQ ? {sndQ:snd.sndQ} : {}), ...(snd.sndA ? {sndA:snd.sndA} : {})});
+      if (!save()){ d.cards.pop(); dropSounds(snd.added); toast(STORAGE_FULL); return; }
       toast(`Card added · ${d.cards.length} in ${d.name}`);
       openAddCards("one");
     };
@@ -1520,26 +1646,31 @@ function openEditCard(id){
   const d = curDeck(), c = d.cards && d.cards.find(x => x.id === id); if (!c) return;
   showModal(`<h3>Edit card</h3>${cardFields(c)}
     <div class="actions"><button class="btn ghost sm" id="mCancel">Cancel</button><button class="btn sm" id="mSave">Save</button></div>`);
-  drawImgFields();
+  drawImgFields(); drawSndFields();
   $("#mCancel").onclick = closeModal;
-  $("#mSave").onclick = () => {
+  $("#mSave").onclick = async () => {
     const q = $("#cQ").value.trim(), a = $("#cA").value.trim();
-    if ((!q && !draft.q) || (!a && !draft.a)){ toast("A card needs a front and a back (text or an image)"); return; }
+    if ((!q && !draft.q && !draftSnd.q) || (!a && !draft.a && !draftSnd.a)){ toast("A card needs a front and a back (text, an image or a sound)"); return; }
+    let snd; try { snd = await commitSounds(); } catch(err){ toast(rec ? "Stop the recording first" : SOUND_FAIL); return; }
     const before = {...c};
     c.q = q; c.a = a; c.why = $("#cW").value.trim();
     const src = $("#cS").value.trim(); if (src) c.src = src; else delete c.src;
     if (draft.q) c.imgQ = draft.q; else delete c.imgQ;
     if (draft.a) c.imgA = draft.a; else delete c.imgA;
-    if (!save()){ Object.keys(c).forEach(k => delete c[k]); Object.assign(c, before); toast(STORAGE_FULL); return; }
+    if (snd.sndQ) c.sndQ = snd.sndQ; else delete c.sndQ;
+    if (snd.sndA) c.sndA = snd.sndA; else delete c.sndA;
+    if (!save()){ Object.keys(c).forEach(k => delete c[k]); Object.assign(c, before); dropSounds(snd.added); toast(STORAGE_FULL); return; }
+    dropSounds(cardSoundKeys(before).filter(k => k !== c.sndQ && k !== c.sndA));
     closeModal(); toast("Card saved");
   };
 }
 function openDeleteCard(id){
   const d = curDeck(), c = d.cards && d.cards.find(x => x.id === id); if (!c) return;
-  showModal(`<h3>Delete this card?</h3><p class="note">“${esc(c.q.length > 120 ? c.q.slice(0,120) + "…" : c.q || "Image card")}” and its review history will be removed. This can't be undone.</p>
+  showModal(`<h3>Delete this card?</h3><p class="note">“${esc(c.q.length > 120 ? c.q.slice(0,120) + "…" : c.q || (c.imgQ ? "Image card" : "Sound card"))}” and its review history will be removed. This can't be undone.</p>
     <div class="actions"><button class="btn ghost sm" id="mCancel">Cancel</button><button class="btn danger sm" id="mDel">Delete card</button></div>`);
   $("#mCancel").onclick = closeModal;
   $("#mDel").onclick = () => {
+    dropSounds(cardSoundKeys(c));
     d.cards = d.cards.filter(x => x.id !== id); delete S.cards[id]; delete S.flags[id];
     if (filt.open === id) filt.open = null; save(); closeModal(); toast("Card deleted");
   };
@@ -1576,7 +1707,7 @@ function openDeleteDeck(){
     <div class="actions"><button class="btn ghost sm" id="mCancel">Cancel</button><button class="btn danger sm" id="mDel">Delete deck</button></div>`);
   $("#mCancel").onclick = closeModal;
   $("#mDel").onclick = () => {
-    d.cards.forEach(c => { delete S.cards[c.id]; delete S.flags[c.id]; });
+    d.cards.forEach(c => { delete S.cards[c.id]; delete S.flags[c.id]; dropSounds(cardSoundKeys(c)); });
     S.decks = S.decks.filter(x => x.id !== d.id); delete S.dk[d.id]; delete S.meta[d.id]; S.deck = "rn";
     filt = {q:"", topic:"all", open:null}; save(); closeModal(); toast("Deck deleted");
   };
@@ -1695,6 +1826,7 @@ function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add
 
 window.addEventListener("hashchange", route);
 route();
+loadSounds().then(() => { if (sndUrls.size && $("#modal").hidden && study.hidden) route(); });
 </script>
 </body>
 </html>

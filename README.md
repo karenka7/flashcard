@@ -6,7 +6,7 @@ A demo of the **Flick** flashcard concept: a 50-card NCLEX-RN starter deck plus 
 
 ## What's in it
 
-- **Decks** — the built-in NCLEX-RN deck, a 36-card **Anatomy & Physiology** demo deck (30 text cards plus six with simplified diagrams: three with the image on the front, three on the back), plus any number of your own. Your own cards can have an **image on the front, the back or both** (Upload image in the card form); uploads are shrunk to 1000px JPEGs and stored in the browser with the deck, so storage space is limited. Create a deck, add cards one at a time or paste a list (`question | answer | explanation`, or tab-separated text from Quizlet/Anki), edit, delete, rename. New-card limits are per deck.
+- **Decks** — the built-in NCLEX-RN deck, a 36-card **Anatomy & Physiology** demo deck (30 text cards plus six with simplified diagrams: three with the image on the front, three on the back), plus any number of your own. Your own cards can have an **image on the front, the back or both** (Upload image in the card form); uploads are shrunk to 1000px JPEGs and stored in the browser with the deck, so storage space is limited. Cards can also have a **sound on the front, the back or both**: upload an audio file (up to 3 MB) or **Record** from the microphone (up to 60 s). Sounds are kept in the browser's IndexedDB, not localStorage, and the card stores only a key. Create a deck, add cards one at a time or paste a list (`question | answer | explanation`, or tab-separated text from Quizlet/Anki), edit, delete, rename. New-card limits are per deck.
 - **Today** — cards due today (split into review / learning / new, with a note on what "learning" means), one Start button, adjustable new cards per day, study by exam area, and a Flagged box with **Review flagged**
 - **Study mode** — full screen; flip cards, multiple choice and select-all-that-apply; a "Why" rationale on every card; live new / learning / review counts; flag a card for review
   - **Two-step grading** (default, after Osmosis): pick confidence (Low / Medium / High) before the answer, then **Missed it** / **Got it**, each showing the next interval. Got it + Low/Medium/High maps to Hard/Good/Easy. The session summary counts confident misses.
@@ -18,11 +18,12 @@ A demo of the **Flick** flashcard concept: a 50-card NCLEX-RN starter deck plus 
 - **Progress** — readiness by exam area and a 7-day review forecast
 - **Demo clock** (Settings) — jump ahead a day to show reviews coming back
 
-Keyboard: two-step mode `1`–`3` confidence, then `1` Missed / `2` Got it · four-button mode `Space` reveal, `1`–`4` grade · `A`–`E` pick an option · `F` flag · `Esc` exit.
+Keyboard: two-step mode `1`–`3` confidence, then `1` Missed / `2` Got it · four-button mode `Space` reveal, `1`–`4` grade · `A`–`E` pick an option · `F` flag · `P` play/pause the card's sound · `Esc` exit.
 
 ## How it's built
 
 - `index.html` only: HTML, CSS and vanilla JavaScript, no build step or dependencies (Inter font from Google Fonts).
+- Card sounds are stored in IndexedDB (database `flick-media`, store `sounds`); in the real app they move to file storage (S3 or Supabase Storage).
 - Progress and user decks are stored in the visitor's browser (`localStorage`, key `flick-nclex-v1`, state version 2; version 1 progress migrates automatically). No accounts, no backend, so decks don't sync across devices yet.
 - Inside the script, three parts are kept separate to ease a later move to React: **data** (`TOPICS`, `CARDS`), **scheduler** (`plan()`, a simple SM-2-style algorithm with learning steps), and **views**.
 
