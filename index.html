@@ -1990,11 +1990,10 @@ async function aiMakeCards({block, sourceName, count, focus}, signal){
         + "Use only what the material says; don't invent facts, doses or numbers. Skip filler such as course logistics. "
         + "For each card, give where in the material it came from (a page, slide, section heading or timestamp) if you can tell. "
         + "Write in the language of the material.",
-      tools: [{name:"save_cards", description:"Save the flashcards you made from the material.",
-        input_schema:{type:"object", required:["cards"], properties:{cards:{type:"array", items:{type:"object", required:["q","a"], properties:{
+      output_config: {format: {type:"json_schema", schema:{type:"object", additionalProperties:false, required:["cards"], properties:{
+        cards:{type:"array", items:{type:"object", additionalProperties:false, required:["q","a","why","where"], properties:{
           q:{type:"string", description:"Front: the question"}, a:{type:"string", description:"Back: the answer"},
-          why:{type:"string", description:"Short explanation"}, where:{type:"string", description:"Page, slide, section or timestamp, if known"}}}}}}}],
-      tool_choice: {type:"tool", name:"save_cards"},
+          why:{type:"string", description:"Short explanation, or empty"}, where:{type:"string", description:"Page, slide, section or timestamp, or empty if unknown"}}}}}}}},
       messages: [{role:"user", content:[block, {type:"text", text:
         `Make flashcards from this material. ${howMany}${focus ? `\nFocus on: ${focus}` : ""}`}]}]
     })
@@ -2007,8 +2006,12 @@ async function aiMakeCards({block, sourceName, count, focus}, signal){
     if (res.status === 529 || res.status >= 500) throw new Error("The AI service is busy. Try again in a minute.");
     throw new Error(msg || `The AI request failed (${res.status}).`);
   }
-  const data = await res.json(), use = (data.content || []).find(b => b.type === "tool_use");
-  const cards = use && use.input && Array.isArray(use.input.cards) ? use.input.cards : [];
+  const data = await res.json(), txt = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+  if (data.stop_reason === "refusal") throw new Error("The AI declined to make cards from this material.");
+  let parsed;
+  try { parsed = JSON.parse(txt); }
+  catch(e){ throw new Error(data.stop_reason === "max_tokens" ? "The answer was too long and got cut off. Ask for fewer cards, or use a shorter document." : "The AI's answer couldn't be read. Try again."); }
+  const cards = parsed && Array.isArray(parsed.cards) ? parsed.cards : [];
   return cards.filter(c => c && c.q && c.a).map(c => ({q:String(c.q).trim(), a:String(c.a).trim(), why:String(c.why || "").trim(),
     src:[sourceName, c.where].filter(Boolean).join(", ")}));
 }
