@@ -56,6 +56,22 @@ npm run build      # production files in dist/
 npm run preview    # serve dist/ locally
 ```
 
+## Database (Supabase)
+
+Not connected to the app yet: the app still saves to the browser. The schema is ready for accounts.
+
+```
+supabase/migrations/20261127000000_initial_schema.sql   tables, sign-up trigger, access rules
+supabase/seed.sql                                       built-in decks and cards (generated)
+scripts/make-seed.mjs                                   regenerates seed.sql from src/data/
+```
+
+Tables: `students` (one per sign-up, created automatically), `decks` and `cards` (built-in rows have no owner; a student's own decks and cards, including cards added to a built-in deck, carry their `owner_id`), `student_deck_settings` (new cards per day, shuffle), `card_states` (each student's current schedule per card, plus the flag) and `reviews` (an append-only log of every answer; `card_states` can be rebuilt from it).
+
+Row-level security: everyone, signed in or not, can read the built-in decks; students read and change only their own rows; nobody can edit built-in cards or change a saved review.
+
+To set up a new project: in the Supabase dashboard, open **SQL Editor**, run the migration file, then run `seed.sql`. After changing built-in cards in `src/data/`, run `node scripts/make-seed.mjs` and run `seed.sql` again (it updates rows in place and bumps a card's `version` when its content changed).
+
 ## Deploy
 
 Build, then upload the contents of `dist/` to the `flashcards/` folder. With S3 + CloudFront:
