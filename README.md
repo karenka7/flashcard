@@ -58,7 +58,13 @@ npm run preview    # serve dist/ locally
 
 ## Database (Supabase)
 
-Not connected to the app yet: the app still saves to the browser. The schema is ready for accounts.
+**Sign-in works; progress doesn't sync yet.** The header has a **Sign in** button: enter an email and Supabase sends a magic link (no password). Coming back from the link signs you in on that device. Progress and decks are still saved in the browser; moving them to the database is the next step.
+
+- `src/supabase.js` creates the client from `.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`). Both values are public by design; the access rules below protect the data. Never put the secret / service_role key in `.env`. Without these values the app runs as before, local-only.
+- `src/auth.js` tracks who's signed in and loads their `students` row; `src/modals/account.js` is the header button and the sign-in / account dialogs.
+- Sign-in links use the PKCE flow (`?code=…`), so they don't clash with the `#today` / `#cards` routes.
+- In the Supabase dashboard, **Authentication → URL Configuration** must list every address the app runs at as a redirect URL (`http://localhost:5173/**`, `https://sashalosh.shop/flashcards/**`), or the link won't bring people back.
+- Supabase's built-in email sends only to members of the Supabase organization, about 2 emails an hour. Before inviting anyone else, set up custom SMTP (for example Amazon SES) under **Authentication → Emails**.
 
 ```
 supabase/migrations/20261127000000_initial_schema.sql   tables, sign-up trigger, access rules

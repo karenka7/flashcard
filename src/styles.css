@@ -26,6 +26,9 @@ kbd{font:600 11px/1 Inter,sans-serif;border:1px solid var(--line);border-bottom-
 .icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--muted);flex:none}
 .icon-btn:hover{color:var(--ink);border-color:#cbd5e1}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--indigo-100);color:var(--indigo-d);display:grid;place-items:center;font-weight:700;font-size:13px}
+button.avatar{border:0;padding:0;font-family:inherit;cursor:pointer}
+button.avatar:hover{background:#c7d2fe}
+#acct{display:flex}
 
 main{padding:32px 24px 120px}
 h1{font-size:28px;letter-spacing:-.025em;margin:0 0 4px;font-weight:700}
@@ -43,6 +46,7 @@ h2{font-size:16px;margin:0 0 14px;font-weight:600;letter-spacing:-.01em}
 .btn.danger{background:var(--again)}
 .btn.danger:hover{background:#b91c1c}
 .btn.textred{color:var(--again)}
+.note.textred{color:var(--again)}
 
 .panel{border:1px solid var(--line);border-radius:var(--r);background:#fff}
 .pad{padding:20px}
