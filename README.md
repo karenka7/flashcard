@@ -1,6 +1,6 @@
 # Flick — NCLEX-RN flashcard prototype
 
-A demo of the **Flick** flashcard concept: a 50-card NCLEX-RN starter deck plus your own decks, with spaced-repetition scheduling, in one static page.
+A demo of the **Flick** flashcard concept: a 50-card NCLEX-RN starter deck plus your own decks, with spaced-repetition scheduling. A static site built with Vite.
 
 **Live target:** https://sashalosh.shop/flashcards/
 
@@ -24,21 +24,50 @@ Keyboard: two-step mode `1`–`3` confidence, then `1` Missed / `2` Got it · fo
 
 ## How it's built
 
-- `index.html` only: HTML, CSS and vanilla JavaScript, no build step or dependencies (Inter font from Google Fonts). The favicon (the Flick logo) is embedded in the page as SVG, with PNG fallbacks.
+A [Vite](https://vite.dev) project: plain HTML, CSS and JavaScript split into ES modules, no framework yet (Inter font from Google Fonts). The favicon (the Flick logo) is embedded in `index.html` as SVG, with PNG fallbacks.
+
+```
+index.html            page shell (header, tabs, study and modal containers)
+src/main.js           start-up: routing and loading sounds
+src/styles.css
+src/data/             built-in decks: nclex.js, anatomy.js, music.js (+ svg.js helper)
+src/scheduler.js      plan(): SM-2-style scheduling with learning steps; fmt()
+src/state.js          saved state (S), load/save, decks, due counts: the layer that moves to Supabase
+src/media.js          card sounds in IndexedDB, generated note tones
+src/ai.js             Make cards with AI: file reading and the API call (aiMakeCards)
+src/dom.js, ui.js     shared helpers: $, esc, deck bar, modal, toast
+src/router.js         route() and switchDeck()
+src/views/            screens: today, cards, progress, study, merch
+src/modals/           dialogs: decks, cardForm, settings, aiMaker
+```
+
+- Progress and user decks are stored in the visitor's browser (`localStorage`, key `flick-nclex-v1`, state version 2; version 1 progress migrates automatically). All reads and writes go through `src/state.js`, which is what changes when accounts arrive. No accounts or backend yet, so decks don't sync across devices.
 - Card sounds are stored in IndexedDB (database `flick-media`, store `sounds`); in the real app they move to file storage (S3 or Supabase Storage).
-- Progress and user decks are stored in the visitor's browser (`localStorage`, key `flick-nclex-v1`, state version 2; version 1 progress migrates automatically). No accounts, no backend, so decks don't sync across devices yet.
-- Inside the script, three parts are kept separate to ease a later move to React: **data** (`TOPICS`, `CARDS`), **scheduler** (`plan()`, a simple SM-2-style algorithm with learning steps), and **views**.
+- Screens still build HTML strings; they can move to React one at a time.
+
+### Run locally
+
+Needs Node 20 or later.
+
+```bash
+npm install
+npm run dev        # http://localhost:5173 with live reload
+npm run build      # production files in dist/
+npm run preview    # serve dist/ locally
+```
 
 ## Deploy
 
-Upload `index.html` to a `flashcards/` folder on the site. With S3 + CloudFront:
+Build, then upload the contents of `dist/` to the `flashcards/` folder. With S3 + CloudFront:
 
 ```bash
-aws s3 cp index.html s3://<bucket>/flashcards/index.html --content-type text/html --cache-control "no-cache"
+npm run build
+aws s3 sync dist/assets s3://<bucket>/flashcards/assets --cache-control "public, max-age=31536000, immutable"
+aws s3 cp dist/index.html s3://<bucket>/flashcards/index.html --content-type text/html --cache-control "no-cache"
 aws cloudfront create-invalidation --distribution-id <id> --paths "/flashcards/*"
 ```
 
-All paths are relative, so it also works at a subdomain root.
+The files in `assets/` have a content hash in their names, so they can be cached for a long time; `index.html` is not cached, so a new build shows up straight away. Asset paths are relative (`base: "./"` in `vite.config.js`), so the build also works at a domain root.
 
 ## Content note
 
@@ -46,7 +75,7 @@ The cards were written for this prototype, not taken from a test bank. Have a nu
 
 ## Next steps
 
-- React front end
+- Move screens to React, one at a time
 - Accounts and server-side progress (Supabase or a Python/Java API on Postgres)
 - Anki (.apkg) import and export
 - Sync decks and progress across devices
