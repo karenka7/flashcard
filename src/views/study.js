@@ -50,7 +50,7 @@ function next(force){
   else if (Q.length) c = Q.shift();
   else if (pend.length){ if (force) c = pend.shift(); else return drawWait(); }
   if (!c) return finish();
-  cur = c; revealed = false; picked = new Set(); conf = null;
+  cur = c; revealed = false; picked = new Set(); conf = null; frontOpen = false;
   drawCard();
 }
 /* Only learning cards are left and none is due yet: show a short wait instead of repeating a card immediately */
@@ -106,6 +106,12 @@ function drawCard(){
     return `<li><button class="opt ${cls}" data-opt="${i}" ${revealed ? "disabled" : ""}><span class="lt">${"ABCDE"[i]}</span><span>${esc(o)}</span></button></li>`;
   }).join("")}</ul>` : "";
 
+  // The front: question, front image and sound, and (before the answer) the options to pick from.
+  // Once the card is turned over only the back shows; "Show front" brings the question back.
+  const front = `<div class="q">${esc(c.q)}</div>
+    ${cardImg(c.imgQ, "Image for this question")}
+    ${cardSnd(c.sndQ, "Sound for this question")}
+    ${revealed ? "" : opts}`;
   sBody.innerHTML = `<div class="card">
     <div class="c-meta">
       <span class="tag"><span class="dot" style="background:${t.color};width:8px;height:8px"></span>${esc(t.name)}</span>
@@ -113,13 +119,14 @@ function drawCard(){
       <span class="tag phase">${phaseTag}</span>
       <button class="flag ${S.flags[c.id] ? "on" : ""}" id="flagBtn" title="Save this card to your Flagged list (F)">⚑ ${S.flags[c.id] ? "Flagged" : "Flag"}</button>
     </div>
-    <div class="q">${esc(c.q)}</div>
-    ${cardImg(c.imgQ, "Image for this question")}
-    ${cardSnd(c.sndQ, "Sound for this question")}
-    ${opts}
-    ${revealed ? `<div class="answer">${verdict ? `<div>${verdict}</div>` : ""}
+    ${!revealed ? front
+      : `<button class="showfront" id="showFront" aria-expanded="${frontOpen}">${frontOpen ? "Hide front ▴" : "Show front ▾"}</button>
+         ${frontOpen ? `<div class="front-peek">${front}</div>` : ""}
+         ${opts}`}
+    ${revealed ? `<div class="answer back">${verdict ? `<div>${verdict}</div>` : ""}
       <div class="a-lbl">Answer</div><div class="a">${esc(c.a)}</div>${cardImg(c.imgA, "Image for this answer")}
       ${cardSnd(c.sndA, "Sound for this answer")}
+      ${c.sndQ && !c.sndA && !frontOpen ? cardSnd(c.sndQ, "Sound from the front of this card") : ""}
       ${c.why ? `<div class="why"><b>Why: </b>${esc(c.why)}</div>` : ""}
       ${c.src ? `<div class="src">Source: ${srcHtml(c.src)}</div>` : ""}</div>` : ""}
   </div>`;
@@ -153,12 +160,13 @@ function drawCard(){
     drawCard();
   });
   $("#flagBtn").onclick = toggleFlag;
+  const sf = $("#showFront"); if (sf) sf.onclick = () => { frontOpen = !frontOpen; drawCard(); };
   sBody.scrollTop = 0;
 }
 
 /* Showing the answer turns the card over: it rotates to edge-on, the back is drawn, then it
    rotates back to face you. Skipped for people who ask their system for reduced motion. */
-let flipping = false;
+let flipping = false, frontOpen = false;
 function reveal(){
   if (revealed || flipping) return;
   const card = sBody.querySelector(".card");

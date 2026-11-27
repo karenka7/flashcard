@@ -239,6 +239,11 @@ h2{font-size:16px;margin:0 0 14px;font-weight:600;letter-spacing:-.01em}
 .opt.bad{border-color:var(--again);background:#fef2f2}
 .opt.bad .lt{background:var(--again);color:#fff}
 .opt[disabled]{cursor:default}
+.showfront{border:0;background:none;padding:0;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;margin:2px 0 4px}
+.showfront:hover{color:var(--ink2)}
+.front-peek{background:var(--soft);border-radius:12px;padding:14px 16px;margin:8px 0 4px}
+.front-peek .q{font-size:17px}
+.answer.back{margin-top:14px;padding-top:0;border-top:0}
 .answer{margin-top:26px;padding-top:22px;border-top:1px dashed var(--line);animation:fade .25s ease}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .verdict{display:inline-block;font-size:13px;font-weight:700;margin:0 6px 10px 0;padding:3px 10px;border-radius:99px}
