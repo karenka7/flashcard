@@ -1,4 +1,5 @@
 import { KIND_LABEL, TOPICS } from "../data/nclex.js";
+import { logReview } from "../sync.js";
 import { $, esc } from "../dom.js";
 import { route } from "../router.js";
 import { CONF, DAY, MIN, fmt, gotGrade, plan } from "../scheduler.js";
@@ -50,7 +51,7 @@ function next(force){
   else if (Q.length) c = Q.shift();
   else if (pend.length){ if (force) c = pend.shift(); else return drawWait(); }
   if (!c) return finish();
-  cur = c; revealed = false; picked = new Set(); conf = null; frontOpen = false;
+  cur = c; revealed = false; picked = new Set(); conf = null; frontOpen = false; shownAt = Date.now();
   drawCard();
 }
 /* Only learning cards are left and none is due yet: show a short wait instead of repeating a card immediately */
@@ -166,7 +167,7 @@ function drawCard(){
 
 /* Showing the answer turns the card over: it rotates to edge-on, the back is drawn, then it
    rotates back to face you. Skipped for people who ask their system for reduced motion. */
-let flipping = false, frontOpen = false;
+let flipping = false, frontOpen = false, shownAt = 0;
 function reveal(){
   if (revealed || flipping) return;
   const card = sBody.querySelector(".card");
@@ -191,8 +192,9 @@ function grade(g){
   rollDay();
   const d = sess.deck, s0 = prog(cur.id), wasNew = s0.phase === "new";
   const {ms, s} = plan(s0, g);
-  s.due = now() + ms; s.reps = (s.reps || 0) + 1;
+  s.due = now() + ms; s.reps = (s.reps || 0) + 1; s.t = Date.now();   // t: when answered, for merging devices
   S.cards[cur.id] = s;
+  logReview({card_id: cur.id, grade: g, confidence: askConf() ? conf : null, time_ms: Date.now() - shownAt});
   if (wasNew) dk(d.id).newSeen++;
   S.today.reviewed++; S.total = (S.total || 0) + 1;
   S.hist[S.day] = (S.hist[S.day] || 0) + 1;

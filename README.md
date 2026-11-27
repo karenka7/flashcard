@@ -58,7 +58,16 @@ npm run preview    # serve dist/ locally
 
 ## Database (Supabase)
 
-**Sign-in works; progress doesn't sync yet.** The header has a **Sign in** button: enter an email and Supabase sends a magic link (no password). Coming back from the link signs you in on that device. Progress and decks are still saved in the browser; moving them to the database is the next step.
+**Sign-in and sync.** The header has a **Sign in** button: enter an email and Supabase sends a magic link (no password). Signed in, your progress, decks and settings are saved to your account and follow you to every device you sign in on.
+
+How sync works (`src/sync.js`):
+- The browser keeps working from its local copy (localStorage), so the app is fast and works offline. About 1.5 s after each save, the changes are sent to Supabase (only the rows that changed). Failures are retried; after an error, or when you come back to the tab after a minute, the app pulls and merges before sending, so it doesn't overwrite newer answers from another device.
+- On sign-in and page load it pulls your rows and merges three ways (this device, what the server last had, the server now). If both devices changed the same card's schedule, the newer answer wins.
+- The first sign-in on a device uploads the progress made there before signing in.
+- Every answer is logged to `reviews` (grade, confidence, time on card), queued locally until sent.
+- Synced: own decks and cards (and cards added to built-in decks), schedules and flags, new cards per day and shuffle per deck, grading settings, deck descriptions, heatmap history, streak, total. Device only: demo clock, today's counters, merch cart, sample heatmap, the open deck, and recorded sounds (only their keys sync, so a sound plays only on the device that recorded it). Uploaded images sync as part of the card for now; they move to Supabase Storage later.
+- **Sign out** sends anything pending (and asks first if it can't), then removes your data from the browser. Another person signing in on the same browser starts from their own account.
+
 
 - `src/supabase.js` creates the client from `.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`). Both values are public by design; the access rules below protect the data. Never put the secret / service_role key in `.env`. Without these values the app runs as before, local-only.
 - `src/auth.js` tracks who's signed in and loads their `students` row; `src/modals/account.js` is the header button and the sign-in / account dialogs.

@@ -48,7 +48,15 @@ function load(){
     return s;
   } catch(e){ return null; }
 }
-export function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); return true; } catch(e){ return false; } }
+/* sync.js registers here to hear about every save (kept as a hook so state.js doesn't import it). */
+let saveHook = null;
+export const setSaveHook = fn => { saveHook = fn; };
+export function save(){
+  let ok;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); ok = true; } catch(e){ ok = false; }
+  if (saveHook) saveHook();
+  return ok;
+}
 
 export const now = () => Date.now() + (S.offset || 0);
 export const dayKey = t => { const d = new Date(t); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
